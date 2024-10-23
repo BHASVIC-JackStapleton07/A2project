@@ -5,7 +5,7 @@ public class Simulator {
         grid = new Grid(100, 100);
     }
 
-    public void update(double deltaTime) {
+    public void stepSimulation() {
         applyAdvection();
         applyDiffusion();
         maintainZeroDivergence();
