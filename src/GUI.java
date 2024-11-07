@@ -71,9 +71,12 @@ public class GUI extends JPanel {
         frame.setVisible(true); //set visible
 
         //routinely update
-        new Timer(16, e -> {
-            simulator.stepSimulation();
-            gui.update();
-        }).start(); //start timer
+        Timer timer = new Timer(16, new ActionListener() { //Define 60fps timer
+            public void actionPerformed(ActionEvent e) {
+                simulator.stepSimulation();
+                gui.update();
+            }
+        });
+        timer.start();
     }
 }
