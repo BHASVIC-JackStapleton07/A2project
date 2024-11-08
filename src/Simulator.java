@@ -5,6 +5,8 @@ public class Simulator {
     // Variables
    int gridHeight; int gridWidth;
    int maxIterations = 20;
+   public int delay = 16; // Timestep
+    double diffusionConstant = 12;
 
     public Simulator() {
         grid = new Grid(100, 100);
@@ -13,7 +15,9 @@ public class Simulator {
 
         // Test cell
         Cell testCell = grid.getCell(1, 1);
-        testCell.density = 80;
+        Cell testCell2 = grid.getCell(98, 98);
+        testCell.density = 100;
+        testCell2.density = 100;
     }
 
     public void stepSimulation() {
@@ -27,42 +31,31 @@ public class Simulator {
     }
 
     private void applyDiffusion() {
-        solveDensities();
+        solveDenstities();
     }
 
     private void maintainZeroDivergence() {
 
     }
 
-    private void solveDensities() {
-        // Loop through each cell
-        for (int i = 0; i < gridWidth; i++) {
-            for (int j = 0; j < gridHeight; j++) {
-                // Get cell
-                Cell cell = grid.getCell(i, j);
-                // Update previous values
-                cell.updatePreviousState();
+    private void solveDenstities() {
+        for (int n = 0; n < maxIterations; n++) {
+            for (int i = 0; i < gridHeight; i++) {
+                for (int j = 0; j < gridWidth; j++) {
+                    Cell cell = grid.getCell(i, j);
+                    double surroundingDensity = calculateSurroundingDensity(i, j);
 
-                // Calculate new density
-                double currentDensity = cell.density;
-                double newDensity = 0;
-
-                // Calculate surrounding density
-                double surroundingDensity = calculateSurroundingDensity(j, i);
-
-                // Apply Gauss-Seidel method
-                newDensity = physics.gaussSeidelSolver(currentDensity, surroundingDensity, maxIterations);
-
-                //Apply density
-                cell.density = newDensity;
+                    cell.updatePreviousState();
+                    cell.density = (cell.density + surroundingDensity * diffusionConstant) / (1 + diffusionConstant);
+                }
             }
         }
     }
 
-    private double calculateSurroundingDensity(int width, int height) {
+
+    private double calculateSurroundingDensity(int height, int width) {
         int num = 0;
         double densityTotal = 0;
-        double surroundingDensity;
         if (width > 0) {
             densityTotal += grid.getCell(height, width-1).density;
             num++;
@@ -79,7 +72,7 @@ public class Simulator {
             densityTotal += grid.getCell(height+1, width).density;
             num++;
         }
-        surroundingDensity = densityTotal / num;
+        double surroundingDensity = densityTotal / num;
         return surroundingDensity;
     }
 

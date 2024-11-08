@@ -26,7 +26,7 @@ public class Cell {
         this.velocityX = 0.0;
         this.velocityY = 0.0;
         this.pressure = 0.0;
-        this.density = 0.0;
+        this.density = 0.1;
         this.prevVelocityX = 0.0;
         this.prevVelocityY = 0.0;
         this.prevDensity = 0.0;

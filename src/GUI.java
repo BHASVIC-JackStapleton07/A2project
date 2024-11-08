@@ -34,7 +34,7 @@ public class GUI extends JPanel {
 
                         //visualize cell density
                         float density = (float) cell.density; //get density
-                        density = Math.max(0, Math.min(100, density)); //clamps between 1 and 0
+                        density = Math.max(0, Math.min(1, density)); //clamps between 1 and 0
 
                         //map density to greyscale
                         int colourValue = (int) (density * 255);
@@ -71,7 +71,7 @@ public class GUI extends JPanel {
         frame.setVisible(true); //set visible
 
         //routinely update
-        Timer timer = new Timer(16, new ActionListener() { //Define 60fps timer
+        Timer timer = new Timer(simulator.delay, new ActionListener() { //Define 60fps timer
             public void actionPerformed(ActionEvent e) {
                 simulator.stepSimulation();
                 gui.update();
