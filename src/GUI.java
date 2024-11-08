@@ -34,7 +34,7 @@ public class GUI extends JPanel {
 
                         //visualize cell density
                         float density = (float) cell.density; //get density
-                        density = Math.max(0, Math.min(1, density)); //clamps between 1 and 0
+                        density = Math.max(0, Math.min(100, density)); //clamps between 1 and 0
 
                         //map density to greyscale
                         int colourValue = (int) (density * 255);
