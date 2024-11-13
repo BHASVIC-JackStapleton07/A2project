@@ -5,7 +5,7 @@ public class Simulator {
     // Variables
    int gridHeight; int gridWidth;
    int maxIterations = 20;
-   public int delay = 32; // Timestep
+   public int delay = 16; // Timestep
     double diffusionConstant = 12;
 
     public Simulator() {
@@ -16,8 +16,10 @@ public class Simulator {
         // Test cell
         Cell testCell = grid.getCell(1, 1);
         Cell testCell2 = grid.getCell(98, 98);
+        Cell testCell3 = grid.getCell(50, 50);
         testCell.density = 500;
         testCell2.density = 500;
+        testCell3.density = 500;
     }
 
     public void stepSimulation() {
