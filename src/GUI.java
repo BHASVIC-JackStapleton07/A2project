@@ -5,7 +5,7 @@ import java.awt.event.ActionListener;
 
 public class GUI extends JPanel {
     private Simulator simulator; //reference simulator
-    private final int CELL_SIZE = 5; //cell size in pixels
+    private final int CELL_SIZE = 3; //cell size in pixels
     private JPanel gridPanel; //grid renderer
 
     // beautiful constructor
