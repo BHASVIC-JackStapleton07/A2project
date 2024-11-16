@@ -5,7 +5,7 @@ import java.awt.event.ActionListener;
 
 public class GUI extends JPanel {
     private Simulator simulator; //reference simulator
-    private final int CELL_SIZE = 3; //cell size in pixels
+    private final int CELL_SIZE = 5; //cell size in pixels
     private JPanel gridPanel; //grid renderer
 
     // beautiful constructor
@@ -38,7 +38,7 @@ public class GUI extends JPanel {
 
                         //map density to greyscale
                         int colourValue = (int) (density * 255);
-                        g.setColor(new Color(colourValue, colourValue, colourValue)); //returns greyscale colour
+                        g.setColor(new Color(0, 0, colourValue)); //returns greyscale colour
 
                         //draw cell at proper position
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);

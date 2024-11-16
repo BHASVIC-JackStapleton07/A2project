@@ -7,15 +7,16 @@ public class Simulator {
    int maxIterations = 20;
    public int delay = 16; // GUI timestep
     double timestep = 1; // Simulator timestep
-    double diffusionConstant = 5;
+    double diffusionConstant = 12;
 
     public Simulator() {
-        grid = new Grid(200, 200);
+        grid = new Grid(100, 100);
         gridHeight = grid.getHeight();
         gridWidth = grid.getWidth();
 
         // Test cell
-        grid.getCell(100, 100).density = 4000;
+        grid.getCell(98, 98).density = 500000;
+        grid.getCell(1, 1).density = 900000;
     }
 
     public void stepSimulation() {
@@ -109,7 +110,17 @@ public class Simulator {
                 valueTotal += grid.getCell(height, width-1).velocityY;
             }
             num++;
+        } else {
+            if (attribute == 1) {
+                valueTotal += grid.getCell(height, width).density;
+            } else if (attribute == 2) {
+                valueTotal += grid.getCell(height, width).velocityX;
+            } else {
+                valueTotal += grid.getCell(height, width).velocityY;
+            }
+            num++;
         }
+
         if (width < gridWidth-1) {
             if (attribute == 1) {
                 valueTotal += grid.getCell(height, width+1).density;
@@ -119,7 +130,16 @@ public class Simulator {
                 valueTotal += grid.getCell(height, width+1).velocityY;
             }
             num++;
+        } else {
+            if (attribute == 1) {
+                valueTotal += grid.getCell(height, width).density;
+            } else if (attribute == 2) {
+                valueTotal += grid.getCell(height, width).velocityX;
+            } else {
+                valueTotal += grid.getCell(height, width).velocityY;
+            }
         }
+
         if (height > 0) {
             if (attribute == 1) {
                 valueTotal += grid.getCell(height-1, width).density;
@@ -129,7 +149,16 @@ public class Simulator {
                 valueTotal += grid.getCell(height-1, width).velocityY;
             }
             num++;
+        } else {
+            if (attribute == 1) {
+                valueTotal += grid.getCell(height, width).density;
+            } else if (attribute == 2) {
+                valueTotal += grid.getCell(height, width).velocityX;
+            } else {
+                valueTotal += grid.getCell(height, width).velocityY;
+            }
         }
+
         if (height < gridHeight-1) {
             if (attribute == 1) {
                 valueTotal += grid.getCell(height+1, width).density;
@@ -139,6 +168,14 @@ public class Simulator {
                 valueTotal += grid.getCell(height+1, width).velocityY;
             }
             num++;
+        } else {
+            if (attribute == 1) {
+                valueTotal += grid.getCell(height, width).density;
+            } else if (attribute == 2) {
+                valueTotal += grid.getCell(height, width).velocityX;
+            } else {
+                valueTotal += grid.getCell(height, width).velocityY;
+            }
         }
         return valueTotal / num;
     }
