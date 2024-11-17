@@ -7,7 +7,7 @@ public class Simulator {
    int maxIterations = 20;
    public int delay = 16; // GUI timestep
     double timestep = 1; // Simulator timestep
-    double diffusionConstant = 12;
+    double diffusionConstant = 2;
 
     public Simulator() {
         grid = new Grid(100, 100);
@@ -15,8 +15,9 @@ public class Simulator {
         gridWidth = grid.getWidth();
 
         // Test cell
-        grid.getCell(98, 98).density = 500000;
-        grid.getCell(1, 1).density = 900000;
+        grid.getCell(98, 98).density = 1000;
+        grid.getCell(1, 1).density = 1000;
+        grid.getCell(50, 50).density = 1000;
     }
 
     public void stepSimulation() {
@@ -35,10 +36,12 @@ public class Simulator {
                 // Source location
                 double fx = j - (cell.velocityX * timestep);
                 double fy = i - (cell.velocityY * timestep);
+                fx = Math.max(0, Math.min(gridWidth - 2, fx));
+                fy = Math.max(0, Math.min(gridHeight - 2, fy));
 
                 // Integer values (ensure in bounds)
-                int ix = Math.max(0, Math.min(gridWidth - 2, (int) Math.floor(fx)));
-                int iy = Math.max(0, Math.min(gridHeight - 2, (int) Math.floor(fy)));
+                int ix = (int) Math.floor(fx);
+                int iy = (int) Math.floor(fy);
 
                 // Fractional values
                 double jx = fx - ix;
@@ -66,8 +69,8 @@ public class Simulator {
     private void solveDensities() {
         for (int n = 0; n < maxIterations; n++) {
             // Avoid boundary collisions
-            for (int i = 1; i < gridHeight-1; i++) {
-                for (int j = 1; j < gridWidth-1; j++) {
+            for (int i = 0; i < gridHeight; i++) {
+                for (int j = 0; j < gridWidth; j++) {
                     Cell cell = grid.getCell(i, j);
                     double surroundingDensity = calculateSurroundingAttributes(i, j, 1);
 
@@ -81,8 +84,8 @@ public class Simulator {
     private void solveVelocities() {
         for (int n = 0; n < maxIterations; n++) {
             // Avoid boundary collisions
-            for (int i = 1; i < gridHeight-1; i++) {
-                for (int j = 1; j < gridWidth-1; j++) {
+            for (int i = 0; i < gridHeight; i++) {
+                for (int j = 0; j < gridWidth; j++) {
                     Cell cell = grid.getCell(i, j);
                     double surroundingVelocityX = calculateSurroundingAttributes(i, j, 2);
                     double surroundingVelocityY = calculateSurroundingAttributes(i, j, 3);
@@ -110,15 +113,6 @@ public class Simulator {
                 valueTotal += grid.getCell(height, width-1).velocityY;
             }
             num++;
-        } else {
-            if (attribute == 1) {
-                valueTotal += grid.getCell(height, width).density;
-            } else if (attribute == 2) {
-                valueTotal += grid.getCell(height, width).velocityX;
-            } else {
-                valueTotal += grid.getCell(height, width).velocityY;
-            }
-            num++;
         }
 
         if (width < gridWidth-1) {
@@ -130,14 +124,6 @@ public class Simulator {
                 valueTotal += grid.getCell(height, width+1).velocityY;
             }
             num++;
-        } else {
-            if (attribute == 1) {
-                valueTotal += grid.getCell(height, width).density;
-            } else if (attribute == 2) {
-                valueTotal += grid.getCell(height, width).velocityX;
-            } else {
-                valueTotal += grid.getCell(height, width).velocityY;
-            }
         }
 
         if (height > 0) {
@@ -149,14 +135,6 @@ public class Simulator {
                 valueTotal += grid.getCell(height-1, width).velocityY;
             }
             num++;
-        } else {
-            if (attribute == 1) {
-                valueTotal += grid.getCell(height, width).density;
-            } else if (attribute == 2) {
-                valueTotal += grid.getCell(height, width).velocityX;
-            } else {
-                valueTotal += grid.getCell(height, width).velocityY;
-            }
         }
 
         if (height < gridHeight-1) {
@@ -168,15 +146,8 @@ public class Simulator {
                 valueTotal += grid.getCell(height+1, width).velocityY;
             }
             num++;
-        } else {
-            if (attribute == 1) {
-                valueTotal += grid.getCell(height, width).density;
-            } else if (attribute == 2) {
-                valueTotal += grid.getCell(height, width).velocityX;
-            } else {
-                valueTotal += grid.getCell(height, width).velocityY;
-            }
         }
+
         return valueTotal / num;
     }
 
@@ -189,4 +160,3 @@ public class Simulator {
         return grid;
     }
 }
-

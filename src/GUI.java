@@ -36,9 +36,13 @@ public class GUI extends JPanel {
                         float density = (float) cell.density; //get density
                         density = Math.max(0, Math.min(1, density)); //clamps between 1 and 0
 
-                        //map density to greyscale
-                        int colourValue = (int) (density * 255);
-                        g.setColor(new Color(0, 0, colourValue)); //returns greyscale colour
+                        // find pink to white gradient
+                        int red = 255; // Constant for white and pink
+                        int green = (int) Math.max(0, Math.min(255, lerp(255, 192, density)));
+                        int blue = (int) Math.max(0, Math.min(255, lerp(255, 203, density)));
+
+
+                        g.setColor(new Color(red, green, blue)); //returns white to pink colour
 
                         //draw cell at proper position
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -78,5 +82,9 @@ public class GUI extends JPanel {
             }
         });
         timer.start();
+    }
+
+    private double lerp(double a, double b, double f) {
+        return a + f * (b - a);
     }
 }
