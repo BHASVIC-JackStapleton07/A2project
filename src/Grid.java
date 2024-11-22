@@ -1,12 +1,12 @@
 public class Grid {
-    private Cell[][] cells;
+    private final Cell[][] cells;
 
     public Grid(int width, int height) {
         cells = new Cell[width][height];
         initializeCells();
     }
 
-    // intiailise cells
+    // initialise cells
     private void initializeCells() {
         for (int i = 0; i < cells.length; i++) {
             for (int j = 0; j < cells[i].length; j++) {

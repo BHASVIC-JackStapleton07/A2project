@@ -21,18 +21,26 @@ public class Cell {
     // temperature
     public double temperature;
 
+    // next values
+    public double nextVelocityX;
+    public double nextVelocityY;
+    public double nextDensity;
+
     //Constructor
     public Cell() {
         this.velocityX = 0.0;
         this.velocityY = 0.0;
         this.pressure = 0.0;
-        this.density = 0.1;
+        this.density = 0.0;
         this.prevVelocityX = 0.0;
         this.prevVelocityY = 0.0;
         this.prevDensity = 0.0;
         this.forceX = 0.0;
         this.forceY = 0.0;
         this.temperature = 0.0;
+        this.nextVelocityX = 0.0;
+        this.nextVelocityY = 0.0;
+        this.nextDensity = 0.0;
     }
 
     // reset force

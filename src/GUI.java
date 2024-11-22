@@ -1,10 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class GUI extends JPanel {
-    private Simulator simulator; //reference simulator
+    private final Simulator simulator; //reference simulator
     private final int CELL_SIZE = 5; //cell size in pixels
     private JPanel gridPanel; //grid renderer
 
@@ -44,7 +42,7 @@ public class GUI extends JPanel {
 
                         g.setColor(new Color(density, density, density)); //returns white to pink colour
 
-                        //draw cell at proper position
+                        // draw cell at proper position
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                     }
                 }
@@ -75,11 +73,10 @@ public class GUI extends JPanel {
         frame.setVisible(true); //set visible
 
         //routinely update
-        Timer timer = new Timer(simulator.delay, new ActionListener() { //Define 60fps timer
-            public void actionPerformed(ActionEvent e) {
-                simulator.stepSimulation();
-                gui.update();
-            }
+        //Define 60fps timer
+        Timer timer = new Timer(simulator.delay, e -> {
+            simulator.stepSimulation();
+            gui.update();
         });
         timer.start();
     }
