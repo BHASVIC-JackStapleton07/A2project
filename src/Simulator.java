@@ -16,10 +16,7 @@ public class Simulator {
         gridWidth = grid.getWidth();
 
         // Test cells
-        //grid.getCell(gridWidth-2, gridHeight-2).density = 1000;
-        //grid.getCell(1, 1).density = 100;
-        //grid.getCell(gridHeight/2, gridHeight/2).density = 1000;
-        grid.getCell(1, 98).density = 1000;
+        grid.getCell(5, 5).density = 1000;
     }
 
     // Main procedures
@@ -27,7 +24,7 @@ public class Simulator {
         applyDiffusion();
         applyAdvection();
         maintainZeroDivergence();
-        System.out.printf("Density = %f\n", grid.getCell(0, 98).density);
+        //System.out.printf("Density = %f\n", grid.getCell(0, 98).density);
     }
 
     private void applyAdvection() {
@@ -42,8 +39,8 @@ public class Simulator {
                 // Source location (ensure in bounds)
                 double fx = j - (cell.velocityX * timestep);
                 double fy = i - (cell.velocityY * timestep);
-                fx = Math.max(0, Math.min(gridWidth - 2, fx));
-                fy = Math.max(0, Math.min(gridHeight - 2, fy));
+                fx = Math.max(0, Math.min(gridWidth - 1, fx));
+                fy = Math.max(0, Math.min(gridHeight - 1, fy));
 
                 // Integer values
                 int ix = (int) Math.floor(fx);
@@ -53,12 +50,22 @@ public class Simulator {
                 double jx = fx - ix;
                 double jy = fy - iy;
 
+                //Neighbour indices
+                int ix1 = Math.min(ix+1, gridWidth-1);
+                int iy1 = Math.min(iy+1, gridHeight-1);
+
                 // Round 1 lerps
-                double z1 = lerp(grid.getCell(ix, iy).density, grid.getCell(ix+1, iy).density, jx);
-                double z2 = lerp(grid.getCell(ix, iy+1).density, grid.getCell(ix+1, iy+1).density, jx);
+                double z1 = lerp(grid.getCell(ix, iy).density, grid.getCell(ix1, iy).density, jx);
+                double z2 = lerp(grid.getCell(ix, iy1).density, grid.getCell(ix1, iy1).density, jx);
 
                 // Final lerp
                 next[i][j] = lerp(z1, z2, jy);
+
+                //debug
+                if (i == 3 && j == 3) {
+                    System.out.printf("Backtracking (3,3 fx=%.2f, fy=%.2f, ix=%d, iy=%d, jx=%.2f, jy=%.2f%n",
+                            fx, fy, ix, iy, jx, jy);
+                }
             }
         }
         // Apply next values to current density
