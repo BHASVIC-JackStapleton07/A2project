@@ -25,12 +25,12 @@ public class GUI extends JPanel {
                 //obtain grid
                 Grid grid = simulator.getGrid();
 
-                //render each cell
+                // Render each cell
                 for (int x = 0; x < grid.getWidth(); x++) {
                     for (int y = 0; y < grid.getHeight(); y++) {
                         Cell cell = grid.getCell(x, y);
 
-                        //visualize cell density
+                        // Visualize cell density
                         float density = (float) cell.density; //get density
                         density = Math.max(0, Math.min(1, density)); //clamps between 1 and 0
 
@@ -42,8 +42,15 @@ public class GUI extends JPanel {
 
                         g.setColor(new Color(density, density, density)); //returns white to pink colour
 
-                        // draw cell at proper position
+                        // Draw cell at correct position and size
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                        // Draw velocity arrows
+                        g.setColor(Color.RED);
+                        g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
+                                y * CELL_SIZE + CELL_SIZE / 2,
+                                (int) (x * CELL_SIZE + CELL_SIZE / 2 + cell.velocityX * 10),
+                                (int) (y * CELL_SIZE + CELL_SIZE / 2 + cell.velocityY * 10));
                     }
                 }
             }

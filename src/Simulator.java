@@ -8,7 +8,7 @@ public class Simulator {
    int maxIterations = 15;
    public int delay = 16; // GUI timestep
     double timestep = 0.1; // Simulator timestep
-    double diffusionConstant = 15;
+    double diffusionConstant = 10;
 
     // Constructor
     public Simulator() {
@@ -17,7 +17,7 @@ public class Simulator {
         gridWidth = grid.getWidth();
 
         // Test cells
-        grid.getCell(0, 0).density = 1000;
+        grid.getCell(50, 50).density = 1000;
     }
 
     // Main procedures
@@ -27,52 +27,47 @@ public class Simulator {
         maintainZeroDivergence();
     }
 
-
     private void applyAdvection() {
-        // Next value array
+        // Next densities array
         double[][] newDensities = new double[gridHeight][gridWidth];
 
         // Loop through each cell
-        for (int i = 0; i < gridHeight; i++) {
-            for (int j = 0; j < gridWidth; j++) {
-                // Get cell
-                Cell cell = grid.getCell(i, j);
+        for (int y = 0; y < gridHeight; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                // Get cell reference
+                Cell cell = grid.getCell(x, y);
 
-                // Calculate and clamp source position
-                double fx = j - (cell.velocityX * timestep);
-                double fy = i - (cell.velocityY * timestep);
-                fx = Math.max(0.5, Math.min(gridWidth - 1.5, fx));
-                fy = Math.max(0.5, Math.min(gridHeight - 1.5, fy));
+                // Calculate source location
+                double fx = x - (cell.velocityX * timestep);
+                double fy = y - (cell.velocityY * timestep);
 
-                // Integer and fractional components
+                // Calculate integer and fractional parts
                 int ix = (int) Math.floor(fx);
                 int iy = (int) Math.floor(fy);
                 double jx = fx - ix;
                 double jy = fy - iy;
 
-                // X neighbour indices and densities
-                int ix1 = Math.min(ix + 1, gridWidth - 1);
-                double bottomLeft = grid.getCell(ix, iy).density;
-                double bottomRight = grid.getCell(ix1, iy).density;
+                // Calculate neighbour densities
+                double topLeft = (ix >= 0 && iy >= 0 && ix < gridWidth && iy < gridHeight)
+                        ? grid.getCell(ix, iy).density : 0;
+                double topRight = (ix + 1 >= 0 && iy >= 0 && ix + 1 < gridWidth && iy < gridHeight)
+                        ? grid.getCell(ix + 1, iy).density : 0;
+                double bottomLeft = (ix >= 0 && iy + 1 >= 0 && ix < gridWidth && iy + 1 < gridHeight)
+                        ? grid.getCell(ix, iy + 1).density : 0;
+                double bottomRight = (ix + 1 >= 0 && iy + 1 >= 0 && ix + 1 < gridWidth && iy + 1 < gridHeight)
+                        ? grid.getCell(ix + 1, iy + 1).density : 0;
 
-                // Y neighbour indices and densities
-                int iy1 = Math.max(iy - 1, 0);
-                double topLeft = grid.getCell(ix, iy1).density;
-                double topRight = grid.getCell(ix1, iy1).density;
-
-                // 1st lerps
-                double z1 = lerp(bottomLeft, bottomRight, jx);
-                double z2 = lerp(topLeft, topRight, jx);
-
+                // First round of lerps
+                double z1 = lerp(topLeft, topRight, jx);
+                double z2 = lerp(bottomLeft, bottomRight, jx);
                 // Final lerp
-                newDensities[j][i] = lerp(z1, z2, jy);
+                newDensities[y][x] = lerp(z1, z2, jy);
             }
         }
-
-        // Apply new densities
-        for (int i = 0; i < gridHeight; i++) {
-            for (int j = 0; j < gridWidth; j++) {
-                grid.getCell(i, j).density = newDensities[i][j];
+        // Apply densities
+        for (int y = 0; y < gridHeight; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                grid.getCell(x, y).density = newDensities[y][x];
             }
         }
     }
@@ -90,27 +85,27 @@ public class Simulator {
     // Diffusion
     private void solveDensities() {
         // Next value array
-        double[][] newDensities = new double[gridHeight][gridWidth];
+        double[][] newDensities = new double[gridWidth][gridHeight];
 
         // Gauss-Seidel Iteration
         for (int n = 0; n < maxIterations; n++) {
             // Loop through each cell
-            for (int i = 0; i < gridHeight; i++) {
-                for (int j = 0; j < gridWidth; j++) {
+            for (int y = 0; y < gridHeight; y++) {
+                for (int x = 0; x < gridWidth; x++) {
                     // Get cell
-                    Cell cell = grid.getCell(i, j);
-                    double surroundingDensity = calculateSurroundingAttributes(i, j, 1);
+                    Cell cell = grid.getCell(x, y);
+                    double surroundingDensity = calculateSurroundingAttributes(x, y, 1);
 
                     // Update previous values
                     cell.updatePreviousState();
                     // Assign calculated value to temporary storage
-                    newDensities[j][i] = (cell.density + surroundingDensity * diffusionConstant) / (1 + diffusionConstant);
+                    newDensities[y][x] = (cell.density + surroundingDensity * diffusionConstant) / (1 + diffusionConstant);
                 }
             }
             // Apply nextDensity values to current density
-            for (int i = 0; i < gridHeight; i++) {
-                for (int j = 0; j < gridWidth; j++) {
-                    grid.getCell(i, j).density = newDensities[j][i];
+            for (int y = 0; y < gridHeight; y++) {
+                for (int x = 0; x < gridWidth; x++) {
+                    grid.getCell(x, y).density = newDensities[y][x];
                 }
             }
         }
@@ -127,11 +122,11 @@ public class Simulator {
             for (int i = 0; i < gridHeight; i++) {
                 for (int j = 0; j < gridWidth; j++) {
                     // Get cell
-                    Cell cell = grid.getCell(i, j);
+                    Cell cell = grid.getCell(j, i);
 
                     // Calculate surrounding velocities
-                    double surroundingVelocityX = calculateSurroundingAttributes(i, j, 2);
-                    double surroundingVelocityY = calculateSurroundingAttributes(i, j, 3);
+                    double surroundingVelocityX = calculateSurroundingAttributes(j, i, 2);
+                    double surroundingVelocityY = calculateSurroundingAttributes(j, i, 3);
 
                     // Update previous values
                     cell.updatePreviousState();
@@ -144,8 +139,8 @@ public class Simulator {
             // Apply new values to current velocities
             for (int i = 0; i < gridHeight; i++) {
                 for (int j = 0; j < gridWidth; j++) {
-                    grid.getCell(i, j).velocityX = newVelocityX[j][i];
-                    grid.getCell(i, j).velocityY = newVelocityY[j][i];
+                    grid.getCell(j, i).velocityX = newVelocityX[i][j];
+                    grid.getCell(j, i).velocityY = newVelocityY[i][j];
                 }
             }
         }

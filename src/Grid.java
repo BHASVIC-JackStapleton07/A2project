@@ -22,7 +22,7 @@ public class Grid {
 
     // update cell specific
     public void setCell(int x, int y, Cell cell) {
-        cells[x][y] = cell;
+        cells[y][x] = cell;
     }
 
     //grid dimension getters
