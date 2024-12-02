@@ -8,7 +8,7 @@ public class Simulator {
    int maxIterations = 15;
    public int delay = 16; // GUI timestep
     double timestep = 0.1; // Simulator timestep
-    double diffusionConstant = 10;
+    double diffusionConstant = 12;
 
     // Constructor
     public Simulator() {
@@ -119,28 +119,28 @@ public class Simulator {
         // Gauss-Seidel solver
         for (int n = 0; n < maxIterations; n++) {
             // Loop through each cell
-            for (int i = 0; i < gridHeight; i++) {
-                for (int j = 0; j < gridWidth; j++) {
+            for (int y = 0; y < gridHeight; y++) {
+                for (int x = 0; x < gridWidth; x++) {
                     // Get cell
-                    Cell cell = grid.getCell(j, i);
+                    Cell cell = grid.getCell(x, y);
 
                     // Calculate surrounding velocities
-                    double surroundingVelocityX = calculateSurroundingAttributes(j, i, 2);
-                    double surroundingVelocityY = calculateSurroundingAttributes(j, i, 3);
+                    double surroundingVelocityX = calculateSurroundingAttributes(x, y, 2);
+                    double surroundingVelocityY = calculateSurroundingAttributes(x, y, 3);
 
                     // Update previous values
                     cell.updatePreviousState();
 
                     // Calculate new velocities
-                    newVelocityX[j][i] = (cell.velocityX + surroundingVelocityX * diffusionConstant) / (1 + diffusionConstant);
-                    newVelocityY[j][i] = (cell.velocityY + surroundingVelocityY * diffusionConstant) / (1 + diffusionConstant);
+                    newVelocityX[y][x] = (cell.velocityX + surroundingVelocityX * diffusionConstant) / (1 + diffusionConstant);
+                    newVelocityY[y][x] = (cell.velocityY + surroundingVelocityY * diffusionConstant) / (1 + diffusionConstant);
                 }
             }
             // Apply new values to current velocities
-            for (int i = 0; i < gridHeight; i++) {
-                for (int j = 0; j < gridWidth; j++) {
-                    grid.getCell(j, i).velocityX = newVelocityX[i][j];
-                    grid.getCell(j, i).velocityY = newVelocityY[i][j];
+            for (int y = 0; y < gridHeight; y++) {
+                for (int x = 0; x < gridWidth; x++) {
+                    grid.getCell(x, y).velocityX = newVelocityX[y][x];
+                    grid.getCell(x, y).velocityY = newVelocityY[y][x];
                 }
             }
         }

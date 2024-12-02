@@ -46,11 +46,11 @@ public class GUI extends JPanel {
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
                         // Draw velocity arrows
-                        g.setColor(Color.RED);
-                        g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
-                                y * CELL_SIZE + CELL_SIZE / 2,
-                                (int) (x * CELL_SIZE + CELL_SIZE / 2 + cell.velocityX * 10),
-                                (int) (y * CELL_SIZE + CELL_SIZE / 2 + cell.velocityY * 10));
+                       // g.setColor(Color.RED);
+                        //g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
+                                //y * CELL_SIZE + CELL_SIZE / 2,
+                                //(int) (x * CELL_SIZE + CELL_SIZE / 2 + cell.velocityX * 10),
+                                //(int) (y * CELL_SIZE + CELL_SIZE / 2 + cell.velocityY * 10));
                     }
                 }
             }
