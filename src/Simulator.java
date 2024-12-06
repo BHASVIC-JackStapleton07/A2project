@@ -18,6 +18,7 @@ public class Simulator {
 
         // Test cells
         grid.getCell(50, 50).density = 1000;
+
     }
 
     // Main procedures
