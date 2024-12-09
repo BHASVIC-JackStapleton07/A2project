@@ -13,11 +13,25 @@ public class Simulator {
     // Constructor
     public Simulator() {
         grid = new Grid(100, 100);
+        // Define dimensions
         gridHeight = grid.getHeight();
         gridWidth = grid.getWidth();
+        // Set boundary
+        setBoundaries();
 
         // Test cells
         grid.getCell(50, 50).density = 1000;
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                if (x == 50) {
+                    if (y == 51) {
+                        grid.getCell(x, y).velocityY = 10;
+                    } else if (y == 50) {
+                        grid.getCell(x, y).velocityY = -10;
+                    }
+                }
+            }
+        }
 
     }
 
@@ -79,7 +93,30 @@ public class Simulator {
     }
 
     private void maintainZeroDivergence() {
+        // Gauss-Seidel iteration
+        for (int n = 0; n < maxIterations; n++) {
+            // Loop through all fluid cells (not edges)
+            for (int x = 1; x < gridWidth-1; x++) {
+                for (int y = 1; y < gridHeight-1; y++) {
 
+                    // Calculate divergence
+                    double divergence = grid.getCell(x+1, y).velocityX -
+                            grid.getCell(x, y).velocityX + grid.getCell(x, y+1).velocityY -
+                            grid.getCell(x, y).velocityY;
+                    if (n == maxIterations-1) { System.out.println(divergence); }
+
+                    // Free cell count (4 is max)
+                    int freeCells = grid.getCell(x+1,y).boundary + grid.getCell(x-1,y).boundary
+                            + grid.getCell(x, y+1).boundary + grid.getCell(x, y-1).boundary;
+
+                    // Calculate new velocities
+                    grid.getCell(x,y).velocityX += divergence * grid.getCell(x-1,y).boundary / freeCells;
+                    grid.getCell(x+1,y).velocityX -= divergence * grid.getCell(x+1,y).boundary / freeCells;
+                    grid.getCell(x,y).velocityY += divergence * grid.getCell(x,y-1).boundary / freeCells;
+                    grid.getCell(x,y+1).velocityY -= divergence * grid.getCell(x,y+1).boundary / freeCells;
+                }
+            }
+        }
     }
 
 
@@ -203,6 +240,20 @@ public class Simulator {
 
     private double lerp(double a, double b, double f) {
         return a + f * (b - a);
+    }
+
+    private void setBoundaries() {
+        // Loop through all cells
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                // Get Cell
+                Cell cell = grid.getCell(x, y);
+                // If edge cell, set to boundary
+                if (x == 0 || x == 99 || y == 0 || y == 99) {
+                    cell.boundary = 0;
+                }
+            }
+        }
     }
 
     // getter
