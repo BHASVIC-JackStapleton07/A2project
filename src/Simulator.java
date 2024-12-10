@@ -7,8 +7,9 @@ public class Simulator {
    int gridWidth;
    int maxIterations = 15;
    public int delay = 16; // GUI timestep
-    double timestep = 0.1; // Simulator timestep
-    double diffusionConstant = 12;
+    double timestep = 0.01; // Simulator timestep
+    double diffusionConstantd = 1;
+    double diffusionConstantv = 10;
 
     // Constructor
     public Simulator() {
@@ -21,25 +22,17 @@ public class Simulator {
 
         // Test cells
         grid.getCell(50, 50).density = 1000;
-        for (int x = 0; x < gridWidth; x++) {
-            for (int y = 0; y < gridHeight; y++) {
-                if (x == 50) {
-                    if (y == 51) {
-                        grid.getCell(x, y).velocityY = 10;
-                    } else if (y == 50) {
-                        grid.getCell(x, y).velocityY = -10;
-                    }
-                }
-            }
-        }
-
+        //grid.getCell(50, 51).velocityY = -15;
+        //grid.getCell(50, 49).velocityY = 15;
     }
 
     // Main procedures
     public void stepSimulation() {
+        keepBoundaryDensity();
+        maintainZeroDivergence1();
         applyAdvection();
         applyDiffusion();
-        maintainZeroDivergence();
+        debugVelocities();
     }
 
     private void applyAdvection() {
@@ -51,6 +44,9 @@ public class Simulator {
             for (int x = 0; x < gridWidth; x++) {
                 // Get cell reference
                 Cell cell = grid.getCell(x, y);
+
+                //Skip boundaries
+                if (grid.getCell(x, y).boundary == 0) { continue; }
 
                 // Calculate source location
                 double fx = x - (cell.velocityX * timestep);
@@ -92,28 +88,30 @@ public class Simulator {
         solveVelocities();
     }
 
-    private void maintainZeroDivergence() {
+    private void maintainZeroDivergence1() {
         // Gauss-Seidel iteration
         for (int n = 0; n < maxIterations; n++) {
             // Loop through all fluid cells (not edges)
-            for (int x = 1; x < gridWidth-1; x++) {
-                for (int y = 1; y < gridHeight-1; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                for (int y = 0; y < gridHeight; y++) {
+
+                    //Skip boundaries
+                    if (grid.getCell(x, y).boundary == 0) { continue; }
 
                     // Calculate divergence
                     double divergence = grid.getCell(x+1, y).velocityX -
                             grid.getCell(x, y).velocityX + grid.getCell(x, y+1).velocityY -
                             grid.getCell(x, y).velocityY;
-                    if (n == maxIterations-1) { System.out.println(divergence); }
 
                     // Free cell count (4 is max)
-                    int freeCells = grid.getCell(x+1,y).boundary + grid.getCell(x-1,y).boundary
-                            + grid.getCell(x, y+1).boundary + grid.getCell(x, y-1).boundary;
+                    int freeCells = grid.getCell(x+1, y).boundary + grid.getCell(x-1, y).boundary + grid.getCell(x, y+1).boundary +
+                            grid.getCell(x, y-1).boundary;
+                    grid.getCell(x, y).velocityX += (double) 1 / freeCells * divergence;
+                    grid.getCell(x+1,y).velocityX -= (double) 1 / freeCells * divergence;
+                    grid.getCell(x,y).velocityY += (double) 1 / freeCells * divergence;
+                    grid.getCell(x,y+1).velocityY -= (double) 1 / freeCells * divergence;
 
-                    // Calculate new velocities
-                    grid.getCell(x,y).velocityX += divergence * grid.getCell(x-1,y).boundary / freeCells;
-                    grid.getCell(x+1,y).velocityX -= divergence * grid.getCell(x+1,y).boundary / freeCells;
-                    grid.getCell(x,y).velocityY += divergence * grid.getCell(x,y-1).boundary / freeCells;
-                    grid.getCell(x,y+1).velocityY -= divergence * grid.getCell(x,y+1).boundary / freeCells;
+
                 }
             }
         }
@@ -132,12 +130,17 @@ public class Simulator {
                 for (int x = 0; x < gridWidth; x++) {
                     // Get cell
                     Cell cell = grid.getCell(x, y);
+
+                    //Skip boundaries
+                    if (grid.getCell(x, y).boundary == 0) { continue; }
+
+                    // Calculate surrounding density
                     double surroundingDensity = calculateSurroundingAttributes(x, y, 1);
 
                     // Update previous values
                     cell.updatePreviousState();
                     // Assign calculated value to temporary storage
-                    newDensities[y][x] = (cell.density + surroundingDensity * diffusionConstant) / (1 + diffusionConstant);
+                    newDensities[y][x] = (cell.density + surroundingDensity * diffusionConstantd) / (1 + diffusionConstantd);
                 }
             }
             // Apply nextDensity values to current density
@@ -162,6 +165,9 @@ public class Simulator {
                     // Get cell
                     Cell cell = grid.getCell(x, y);
 
+                    //Skip boundaries
+                    if (grid.getCell(x, y).boundary == 0) { continue; }
+
                     // Calculate surrounding velocities
                     double surroundingVelocityX = calculateSurroundingAttributes(x, y, 2);
                     double surroundingVelocityY = calculateSurroundingAttributes(x, y, 3);
@@ -170,8 +176,8 @@ public class Simulator {
                     cell.updatePreviousState();
 
                     // Calculate new velocities
-                    newVelocityX[y][x] = (cell.velocityX + surroundingVelocityX * diffusionConstant) / (1 + diffusionConstant);
-                    newVelocityY[y][x] = (cell.velocityY + surroundingVelocityY * diffusionConstant) / (1 + diffusionConstant);
+                    newVelocityX[y][x] = (cell.velocityX + surroundingVelocityX * diffusionConstantv) / (1 + diffusionConstantv);
+                    newVelocityY[y][x] = (cell.velocityY + surroundingVelocityY * diffusionConstantv) / (1 + diffusionConstantv);
                 }
             }
             // Apply new values to current velocities
@@ -254,6 +260,27 @@ public class Simulator {
                 }
             }
         }
+    }
+
+    private void keepBoundaryDensity() {
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                if (grid.getCell(x, y).boundary == 0) { grid.getCell(x, y).density = 100.0; }
+            }
+        }
+    }
+
+    private void debugVelocities() {
+        double velocitiesx = 0;
+        double velocitiesy = 0;
+        for (int y = 0; y < gridHeight; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                Cell cell = grid.getCell(x, y);
+                velocitiesx += cell.velocityX;
+                velocitiesy += cell.velocityY;
+            }
+        }
+        System.out.println("VelocitiesX: " + velocitiesx + ", VelocitiesY: " + velocitiesy);
     }
 
     // getter
