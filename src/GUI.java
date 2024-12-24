@@ -34,23 +34,19 @@ public class GUI extends JPanel {
                         float density = (float) cell.density; //get density
                         density = Math.max(0, Math.min(1, density)); //clamps between 1 and 0
 
-                        // find pink to white gradient
-                        //int red = 255; // Constant for white and pink
-                        //int green = (int) Math.max(0, Math.min(255, lerp(255, 192, density)));
-                        //int blue = (int) Math.max(0, Math.min(255, lerp(255, 203, density)));
-
-
                         g.setColor(new Color(density, density, density)); //returns white to pink colour
 
                         // Draw cell at correct position and size
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
                         // Draw velocity arrows
-                        g.setColor(Color.RED);
-                        g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
-                                y * CELL_SIZE + CELL_SIZE / 2,
-                                (int) (x * CELL_SIZE + CELL_SIZE / 2 + cell.velocityX * 10),
-                                (int) (y * CELL_SIZE + CELL_SIZE / 2 + cell.velocityY * 10));
+                        if (simulator.showVectorArrows == true) {
+                            g.setColor(Color.RED);
+                            g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
+                                    y * CELL_SIZE + CELL_SIZE / 2,
+                                    (int) (x * CELL_SIZE + CELL_SIZE / 2 + cell.velocityX * 10),
+                                    (int) (y * CELL_SIZE + CELL_SIZE / 2 + cell.velocityY * 10));
+                        }
                     }
                 }
             }
