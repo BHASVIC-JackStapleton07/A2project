@@ -1,15 +1,19 @@
-import java.lang.Math;
 public class Simulator {
     // References
     private final Grid grid;
     // Variables
    int gridHeight;
    int gridWidth;
+
+   // Constants
    int maxIterations = 15;
    public int delay = 1*16; // GUI timestep
     double timestep = 0.05; // Simulator timestep
     double diffusionConstant = 1;
+    double gravity = 5;
+    double overrelaxation = 1.9;
 
+    // Visual
     public boolean showVectorArrows;
 
     // Constructor
@@ -30,137 +34,97 @@ public class Simulator {
     // Main procedures
     public void stepSimulation() {
         // Physics
-        //addTapSource();
-        applyAdvection();
-        applyDiffusion();
-        maintainZeroDivergence();
-        applyBoundaryConditions();
+        solveIncompressibility();
+        extrapolate();
+        advectVel();
+        advectSmoke();
 
         // Debug
-        //debugTotalDensity();
         debugDivergence();
     }
 
-    // Advection
-    private void applyAdvection() {
-        // Loop through all cells
-        for (int y = 0; y < gridHeight; y++) {
-            for (int x = 0; x < gridWidth; x++) {
-                // Get cell
-                Cell cell = grid.getCell(x, y);
-
-                // Skip boundaries
-                if (cell.boundary == 0) {
-                    continue;
-                }
-
-                // Find source positions
-                double fx = x - cell.velocityX * timestep;
-                double fy = y - cell.velocityY * timestep;
-
-                // Clamp f-values (with a half allowance)
-                fx = Math.max(1, Math.min(gridWidth - 1, fx));
-                fy = Math.max(1, Math.min(gridHeight - 1, fy));
-
-                // Calculate Integer values
-                int ix = (int) Math.floor(fx);
-                int iy = (int) Math.floor(fy);
-
-                // Fractional weights
-                double jx = fx - ix;  // Horizontal fraction
-                double jy = fy - iy;  // Vertical fraction
-                double kx = 1.0 - jx;
-                double ky = 1.0 - jy;
-
-                // Bilinear interpolation
-
-                cell.density = ky * (kx * grid.getCell(ix, iy).density + jx * grid.getCell(ix + 1, iy).density)
-                                + jy * (kx * grid.getCell(ix, iy + 1).density + jx * grid.getCell(ix + 1, iy + 1).density);
-
-                cell.velocityX = ky * (kx * grid.getCell(ix, iy).velocityX + jx * grid.getCell(ix + 1, iy).velocityX)
-                        + jy * (kx * grid.getCell(ix, iy + 1).velocityX + jx * grid.getCell(ix + 1, iy + 1).velocityX);
-
-                cell.velocityY = ky * (kx * grid.getCell(ix, iy).velocityY + jx * grid.getCell(ix + 1, iy).velocityY)
-                        + jy * (kx * grid.getCell(ix, iy + 1).velocityY + jx * grid.getCell(ix + 1, iy + 1).velocityY);
-
-            }
-        }
-    }
-
-    // Diffusion
-    private void applyDiffusion() {
-        // Gauss-Seidel iteration
-        for (int n = 0; n < maxIterations; n++) {
-            for (int y = 0; y < gridHeight; y++) {
-                for (int x = 0; x < gridWidth; x++) {
-                    // Get cell
-                    Cell cell = grid.getCell(x, y);
-
-                    // Skip boundary
-                    if (cell.boundary == 0) {
-                        continue;
-                    }
-
-                    // Calculate surrounding values
-                    double surroundingDensity = calculateSurroundingValue(x, y, 0);
-                    double surroundingVelocityX = calculateSurroundingValue(x, y, 1);
-                    double surroundingVelocityY = calculateSurroundingValue(x, y, 2);
-
-                    // Diffuse values
-                    cell.density = (surroundingDensity + cell.density * diffusionConstant) / (1 + 4 * diffusionConstant);
-                    //cell.velocityX = (surroundingVelocityX + cell.velocityX * diffusionConstant) / (1 + 4 * diffusionConstant);
-                    //cell.velocityY = (surroundingVelocityY + cell.velocityY * diffusionConstant) / (1 + 4 * diffusionConstant);
-                }
-            }
-        }
-    }
-
-    // Zero-Divergence
-    private void maintainZeroDivergence() {
-        for (int n = 0; n < 20; n++) {
-            for (int y = 0; y < gridHeight; y++) {
-                for (int x = 0; x < gridWidth; x++) {
-                    Cell cell = grid.getCell(x, y);
-                    if (cell.boundary == 0) { continue; }
-
-                    double d = calculateDivergence(x, y);
-                    int cells = grid.getCell(x-1,y).boundary + grid.getCell(x+1,y).boundary
-                            + grid.getCell(x,y-1).boundary + grid.getCell(x,y+1).boundary;
-
-                    cell.velocityX += (d * grid.getCell(x-1,y).boundary) / cells;
-                    grid.getCell(x+1,y).velocityX -= (d * grid.getCell(x+1,y).boundary) / cells;
-                    cell.velocityY += (d * grid.getCell(x,y-1).boundary) / cells;
-                    grid.getCell(x,y+1).velocityY -= (d * grid.getCell(x,y+1).boundary) / cells;
-                }
-            }
-        }
-    }
-
-    private double calculateDivergence(int x, int y) {
-        Cell cell = grid.getCell(x, y); // Get cell
-
-        // Approximation of divergence
-        double dv_dx = grid.getCell(x+1,y).velocityX - cell.velocityX;
-        double dv_dy = grid.getCell(x,y+1).velocityY - cell.velocityY;
-        return dv_dy + dv_dx;
-    }
-
-    // Boundaries
-    private void applyBoundaryConditions() {
+    public void addGravity() {
         for (int x = 0; x < gridWidth; x++) {
             for (int y = 0; y < gridHeight; y++) {
                 Cell cell = grid.getCell(x, y);
 
-                if (cell.boundary == 0) {
-                    cell.velocityX = 0.0;
-                    cell.velocityY = 0.0;
+                if (cell.boundary == 1) {
+                    cell.velocityY += gravity * timestep;
                 }
             }
         }
     }
 
+    public void solveIncompressibility() {
+        double cp = 0.1 / timestep;
+
+        for (int n = 0; n < 20; n++) {
+            for (int y = 0; y < gridHeight; y++) {
+                for (int x = 0; x < gridWidth; x++) {
+                    Cell cell = grid.getCell(x, y);
+                    if (cell.boundary == 1) {
+                        double sx0 = grid.getCell(x-1,y).boundary;
+                        double sx1 = grid.getCell(x+1,y).boundary;
+                        double sy0 = grid.getCell(x,y-1).boundary;
+                        double sy1 = grid.getCell(x,y+1).boundary;
+                        double s = sx0 + sx1 + sy0 + sy1;
+
+                        if (s != 0) {
+                            double div = grid.getCell(x+1,y).velocityX - cell.velocityX
+                                    + grid.getCell(x,y+1).velocityY - cell.velocityY;
+                            double p = -div / s;
+                            p *= overrelaxation;
+                            cell.pressure += cp * p;
+
+                            cell.velocityX -= sx0 * p;
+                            grid.getCell(x+1,y).velocityX += sx1 * p;
+                            cell.velocityY -= sy0 * p;
+                            grid.getCell(x,y+1).velocityY += sy1 * p;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void extrapolate() {
+        for (int x = 0; x < gridWidth; x++) {
+            grid.getCell(x, 0).velocityX = grid.getCell(x,1).velocityX;
+            grid.getCell(x, gridHeight-1).velocityX = grid.getCell(x,gridHeight-2).velocityX;
+        }
+        for (int y = 0; y < gridHeight; y++) {
+            grid.getCell(0, y).velocityY = grid.getCell(1,y).velocityY;
+            grid.getCell(gridWidth-1, y).velocityY = grid.getCell(gridWidth-2,y).velocityY;
+        }
+    }
+
+    public void advectVel() {
+        for (int x = 1; x < grid)
+    }
 
     //  Other procedures
+
+    private double sampleField(int choice, double x, double y) {
+        double h1 = 1;
+        double h2 = 0.5;
+
+        x = Math.max(Math.min(x, gridWidth), 1);
+        y = Math.max(Math.min(y, gridHeight), 1);
+
+        double dx = 0.0, dy = 0.0;
+        return dx;
+    }
+
+    public double avgU(int x, int y) {
+        return (grid.getCell(x,y-1).velocityX + grid.getCell(x,y).velocityX +
+                grid.getCell(x+1,y+1).velocityX + grid.getCell(x+1,y).velocityX) * 0.25;
+    }
+
+    public double avgV(int x, int y) {
+        return (grid.getCell(x-1,y).velocityY + grid.getCell(x,y).velocityY +
+                grid.getCell(x-1,y+1).velocityY + grid.getCell(x,y+1).velocityY) * 0.25;
+    }
+
     private double calculateSurroundingValue(int x, int y, int value) {
         double total = 0; // Total density
         // 0: Density, 1: VelocityX, 2: VelocityY
@@ -217,15 +181,40 @@ public class Simulator {
         return a + f * (b - a);
     }
 
+    // Boundaries
     private void setBoundaries() {
-        // Loop through all cells
-        for (int x = 0; x < gridWidth; x++) {
-            for (int y = 0; y < gridHeight; y++) {
-                // Get Cell
-                Cell cell = grid.getCell(x, y);
-                // If edge cell, set to boundary
-                if (x == 0 || x == 99 || y == 0 || y == 99) {
-                    cell.boundary = 0;
+        for (int y = 0; y < gridHeight; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                if (x == 0 || x == gridWidth-1 || y == 0 || y == gridHeight-1) {
+                    grid.getCell(x,y).boundary = 0;
+                    grid.getCell(x,y).velocityY = 0;
+                    grid.getCell(x,y).velocityX = 0;
+                }
+            }
+        }
+    }
+
+    public void applyBoundaryConditions() {
+        for (int y = 0; y < gridHeight; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                Cell cell = grid.getCell(x,y);
+                if (cell.boundary == 0) {
+                    cell.velocityX = 0;
+                    cell.velocityY = 0;
+
+                    //Adjust fluid neighbours
+                    if (x > 0 && grid.getCell(x-1,y).boundary == 1) {
+                        grid.getCell(x-1,y).velocityX = 0.0;
+                    }
+                    if (x < gridWidth-1 && grid.getCell(x+1,y).boundary == 1) {
+                        grid.getCell(x+1,y).velocityX = 0.0;
+                    }
+                    if (y > 0 && grid.getCell(x,y-1).boundary == 1) {
+                        grid.getCell(x,y-1).velocityY = 0.0;
+                    }
+                    if (y < gridHeight-1 && grid.getCell(x,y+1).boundary == 1) {
+                        grid.getCell(x,y+1).velocityY = 0.0;
+                    }
                 }
             }
         }
@@ -262,10 +251,14 @@ public class Simulator {
     }
 
     private void debugDivergence() {
-        for (int y = 1; y < gridHeight-1; y++) {
-            for (int x = 1; x < gridWidth-1; x++) {
-                double d = calculateDivergence(x, y);
-                System.out.println(d);
+        for (int y = 0; y < gridHeight; y++) {
+            for (int x = 0; x < gridWidth; x++) {
+                Cell cell = grid.getCell(x,y);
+                if (cell.boundary == 1) {
+                    double d = (grid.getCell(x+1,y).velocityX - cell.velocityX) +
+                            (grid.getCell(x,y+1).velocityY - cell.velocityY);
+                    System.out.println(d);
+                }
             }
         }
     }
