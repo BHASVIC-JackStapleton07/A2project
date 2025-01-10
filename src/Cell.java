@@ -21,22 +21,22 @@ public class Cell {
     // temperature
     public double temperature;
 
-    // boundary (0 if boundary, 1 if fluid)
-    public int boundary;
+    // state (0 if boundary, 1 if fluid)
+    public int state;
 
     //Constructor
     public Cell() {
         this.velocityX = 0.0;
         this.velocityY = 0.0;
         this.pressure = 0.0;
-        this.density = 0.1;
+        this.density = 0.5;
         this.prevVelocityX = 0.0;
         this.prevVelocityY = 0.0;
         this.prevDensity = 0.0;
         this.forceX = 0.0;
         this.forceY = 0.0;
         this.temperature = 0.0;
-        this.boundary = 1;
+        this.state = 1;
     }
 
     // reset force
