@@ -31,16 +31,20 @@ public class GUI extends JPanel {
                         Cell cell = grid.getCell(x, y);
 
                         // Visualize cell density
-                        float density = (float) cell.density; //get density
-                        density = Math.max(0, Math.min(1, density)); //clamps between 1 and 0
+                        float max = simulator.maxDensity;
+                        float densityValue = (float) cell.density; //get density
+                        densityValue = Math.max(0, Math.min(max, densityValue)); //clamps between 1 and 0
+                        densityValue  = densityValue / max;
 
-                        g.setColor(new Color(density, density, density)); //returns white to pink colour
+                        g.setColor(new Color(densityValue, densityValue, densityValue));
 
                         // Draw cell at correct position and size
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
                         // Draw velocity arrows
                         if (simulator.showVectorArrows == true) {
+                            double xVal = Math.min(cell.velocityX, 30) / 15;
+                            double yVal = Math.min(cell.velocityY, 30) / 15;
                             g.setColor(Color.RED);
                             g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
                                     y * CELL_SIZE + CELL_SIZE / 2,
