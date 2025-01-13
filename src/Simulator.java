@@ -26,7 +26,7 @@ public class Simulator {
         // Set boundary
         setBoundaries();
         // Debugging
-        showVectorArrows = false;
+        showVectorArrows = true;
 
         // Test cells
         grid.getCell(50, 50).density = 0.1;
@@ -44,7 +44,7 @@ public class Simulator {
 
         // Interaction
         addTap(1, 50, 'r', 75);
-        addTap(50, 1, 'd', 75);
+        //addTap(98, 50, 'l', 75);
 
         // Debug
         //debugDivergence();
@@ -198,8 +198,8 @@ public class Simulator {
         double h2 = 0.5;
 
         // Clamp x and y to grid
-        x = Math.max(Math.min(x, gridWidth), 1);
-        y = Math.max(Math.min(y, gridHeight), 1);
+        x = Math.max(Math.min(x, gridWidth-2), 1);
+        y = Math.max(Math.min(y, gridHeight-2), 1);
 
         double dx = 0.0;
         double dy = 0.0;
