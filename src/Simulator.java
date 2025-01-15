@@ -29,7 +29,6 @@ public class Simulator {
         showVectorArrows = true;
 
         // Test cells
-        grid.getCell(50, 50).density = 0.1;
     }
 
     // Main procedures
@@ -40,14 +39,12 @@ public class Simulator {
         advectVelocity();
         advectDensity();
 
-        // Boundaries
-
         // Interaction
         addTap(1, 50, 'r', 75);
-        //addTap(98, 50, 'l', 75);
 
         // Debug
         //debugDivergence();
+        //debugTotalDensity();
     }
 
     public void addGravity() {
@@ -119,7 +116,7 @@ public class Simulator {
 
                     xVal -= timestep * u;
                     yVal -= timestep * v;
-                    u = sampleField(xVal, yVal, 0);
+                    u = lerpPoint(xVal, yVal, 0);
                     newVelocityX[x][y] = u;
                 }
 
@@ -131,7 +128,7 @@ public class Simulator {
 
                     xVal -= timestep * u;
                     yVal -= timestep * v;
-                    v = sampleField(xVal, yVal, 1);
+                    v = lerpPoint(xVal, yVal, 1);
                     newVelocityY[x][y] = v;
                 }
             }
@@ -158,7 +155,7 @@ public class Simulator {
                     double xVal = x + 0.5 - timestep * u;
                     double yVal = y + 0.5 - timestep * v;
 
-                    newDensity[x][y] = sampleField(xVal, yVal, 2);
+                    newDensity[x][y] = lerpPoint(xVal, yVal, 2);
                 }
             }
         }
@@ -193,9 +190,7 @@ public class Simulator {
 
     //  Other procedures
 
-    private double sampleField(double x, double y, int choice) {
-        double h1 = 1.0;
-        double h2 = 0.5;
+    private double lerpPoint(double x, double y, int choice) {
 
         // Clamp x and y to grid
         x = Math.max(Math.min(x, gridWidth-2), 1);
@@ -207,11 +202,11 @@ public class Simulator {
         //Adjust dx and dy based on field
         //0: velocityX, 1: velocityY, 2: density
         if (choice == 0) {
-            dy = h2;
+            dy = 0.5;
         } else if (choice == 1) {
-            dx = h2;
+            dx = 0.5;
         } else if (choice == 2) {
-            dx = h2; dy = h2;
+            dx = 0.5; dy = 0.5;
         }
 
         // Find neighbours
@@ -252,7 +247,7 @@ public class Simulator {
 
     public double avgU(int x, int y) {
         return (grid.getCell(x,y-1).velocityX + grid.getCell(x,y).velocityX +
-                grid.getCell(x+1,y+1).velocityX + grid.getCell(x+1,y).velocityX) * 0.25;
+                grid.getCell(x+1,y-1).velocityX + grid.getCell(x+1,y).velocityX) * 0.25;
     }
 
     public double avgV(int x, int y) {
