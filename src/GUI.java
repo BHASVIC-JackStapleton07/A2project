@@ -41,15 +41,26 @@ public class GUI extends JPanel {
                         // Draw cell at correct position and size
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
+
                         // Draw velocity arrows
-                        if (simulator.showVectorArrows == true) {
-                            double xVal = Math.min(cell.velocityX, 30) / 15;
-                            double yVal = Math.min(cell.velocityY, 30) / 15;
-                            g.setColor(Color.RED);
-                            g.drawLine(x * CELL_SIZE + CELL_SIZE / 2,
-                                    y * CELL_SIZE + CELL_SIZE / 2,
-                                    (int) (x * CELL_SIZE + CELL_SIZE / 2 + cell.velocityX * 10),
-                                    (int) (y * CELL_SIZE + CELL_SIZE / 2 + cell.velocityY * 10));
+                        if (simulator.showVectorArrows == true
+                                && x % simulator.arrowSpacing == 0
+                                && y % simulator.arrowSpacing == 0) { // Arrow spacing
+                            // Skip boundaries
+                            if (cell.state == 0) { continue; }
+
+                            // Clamp velocities
+                            double xVel = Math.max(Math.min(cell.velocityX, 50), -50);
+                            double yVel = Math.max(Math.min(cell.velocityY, 50), -50);
+
+                            // Skip still cells
+                            if (cell.velocityX != 0 || cell.velocityY != 0) {
+                                g.setColor(Color.RED); // Set colour
+                                g.drawLine(x * CELL_SIZE + CELL_SIZE / 2, // Draw line with variable length
+                                        y * CELL_SIZE + CELL_SIZE / 2,
+                                        (int) (x * CELL_SIZE + CELL_SIZE / 2 + xVel / 5),
+                                        (int) (y * CELL_SIZE + CELL_SIZE / 2 + yVel / 5));
+                            }
                         }
                     }
                 }

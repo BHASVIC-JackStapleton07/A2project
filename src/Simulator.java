@@ -6,15 +6,14 @@ public class Simulator {
    int gridWidth;
 
    // Constants
-   int maxIterations = 15;
    public int delay = 1*16; // GUI timestep
     double timestep = 0.05; // Simulator timestep
-    double diffusionConstant = 1;
     double gravity = 5;
     double overrelaxation = 1.0;
 
     // Visual
     public boolean showVectorArrows;
+    public double arrowSpacing = 2;
     public float maxDensity = 10;
 
     // Constructor
