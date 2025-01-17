@@ -2,20 +2,34 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GUI extends JPanel {
-    private final Simulator simulator; //reference simulator
-    private final int CELL_SIZE = 5; //cell size in pixels
-    private JPanel gridPanel; //grid renderer
+    private final Simulator simulator; // Reference simulator
+    private final int CELL_SIZE; // Cell size in pixels
+    static JFrame frame = new JFrame("Fluid Sim"); // Frame for program
+    private JPanel gridPanel; // Grid renderer
+    private JPanel mainPanel; // Main display panel
+    private JButton playButton;
+    private JButton slowButton;
+    private JButton fastButton;
 
-    // beautiful constructor
+    // Beautiful constructor
     public GUI(Simulator simulator) {
-        this.simulator = simulator; //initialise simulator
+        // Initialise simulator
+        this.simulator = simulator;
+        CELL_SIZE = simulator.gridHeight / 15;
+
+        // Layout
         JPanel center = new JPanel(new FlowLayout());
-        createGridPanel(); //crate grid panel
+
+        // Create and add grid panel
+        createGridPanel();
         center.add(gridPanel);
         add(center);
+
+        // Create control panel
+        createControlPanel();
     }
 
-    //create gridPanel
+    // Create grid panel
     private void createGridPanel() {
         gridPanel = new JPanel() {
             @Override
@@ -50,16 +64,21 @@ public class GUI extends JPanel {
                             if (cell.state == 0) { continue; }
 
                             // Clamp velocities
-                            double xVel = Math.max(Math.min(cell.velocityX, 50), -50);
-                            double yVel = Math.max(Math.min(cell.velocityY, 50), -50);
+                            double xVel = Math.max(Math.min(cell.velocityX, 30), -30);
+                            double yVel = Math.max(Math.min(cell.velocityY, 30), -30);
 
                             // Skip still cells
-                            if (cell.velocityX != 0 || cell.velocityY != 0) {
+                            if (cell.velocityX != 0 && cell.velocityY != 0) {
+                                // Calculate start and end coordinates
+                                int startX = x * CELL_SIZE + CELL_SIZE / 2;
+                                int startY = y * CELL_SIZE + CELL_SIZE / 2;
+                                int endX = (int) (startX + simulator.arrowSpacing * xVel / 3);
+                                int endY = (int) (startY + simulator.arrowSpacing * yVel / 3);
+
                                 g.setColor(Color.RED); // Set colour
-                                g.drawLine(x * CELL_SIZE + CELL_SIZE / 2, // Draw line with variable length
-                                        y * CELL_SIZE + CELL_SIZE / 2,
-                                        (int) (x * CELL_SIZE + CELL_SIZE / 2 + xVel / 5),
-                                        (int) (y * CELL_SIZE + CELL_SIZE / 2 + yVel / 5));
+
+                                // Draw arrow
+                                drawArrow((Graphics2D) g, startX, startY, endX, endY);
                             }
                         }
                     }
@@ -73,14 +92,54 @@ public class GUI extends JPanel {
         gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
     }
 
-    //update method
+    // Create control panel
+    private void createControlPanel() {
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // Add buttons
+        controlPanel.add(slowButton);
+        controlPanel.add(playButton);
+        controlPanel.add(fastButton);
+        // Add control panel to the main frame
+        frame.add(controlPanel, BorderLayout.SOUTH);
+    }
+
+    private void drawArrow(Graphics2D g, int xStart, int yStart, int xEnd, int yEnd) {
+        // Enable Anti-Aliasing
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // Increase thickness
+        g2d.setStroke(new BasicStroke(1.5f));
+
+        // Draw line
+        g2d.drawLine(xStart, yStart, xEnd, yEnd);
+
+        // Draw arrowhead
+        Polygon polygon = new Polygon();
+
+        // Calculating arrow dimensions
+        double size = CELL_SIZE;
+        double dx = xStart - xEnd;
+        double dy = yStart - yEnd;
+        double angle = Math.atan2(dx, dy);
+
+        // Plotting points
+        polygon.addPoint(xEnd, yEnd);
+        polygon.addPoint(xEnd + (int) (size + Math.sin(angle + Math.PI / 6)), yEnd + (int) (size * Math.cos(angle + Math.PI / 6)));
+        polygon.addPoint(xEnd + (int) (size + Math.sin(angle - Math.PI / 6)), yEnd + (int) (size * Math.cos(angle - Math.PI / 6)));
+        polygon.addPoint(xEnd, yEnd);
+
+        // Fill polygon
+        g2d.fillPolygon(polygon);
+    }
+
+    // Update method
     public void update() {
         gridPanel.repaint();
     }
 
+    // Set up the GUI
     public static void createAndShowGUI(Simulator simulator) {
-        //create main jframe
-        JFrame frame = new JFrame("Fluid Sim");
+        // Create new JFrame
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 800);
 
@@ -97,9 +156,5 @@ public class GUI extends JPanel {
             gui.update();
         });
         timer.start();
-    }
-
-    private double lerp(double a, double b, double f) {
-        return a + f * (b - a);
     }
 }
