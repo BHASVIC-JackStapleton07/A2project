@@ -1,6 +1,7 @@
 public class Simulator {
     // References
     private final Grid grid;
+
     // Variables
    int gridHeight;
    int gridWidth;
@@ -15,6 +16,9 @@ public class Simulator {
     public boolean showVectorArrows;
     public double arrowSpacing = 6;
     public float maxDensity = 10;
+
+    // Functionality
+    public boolean isPaused = false;
 
     // Constructor
     public Simulator() {
@@ -32,18 +36,21 @@ public class Simulator {
 
     // Main procedures
     public void stepSimulation() {
-        // Physics
-        maintainZeroDivergence();
-        extrapolate();
-        advectVelocity();
-        advectDensity();
+        // If paused, don't play
+        if (!isPaused) {
+            // Physics
+            maintainZeroDivergence();
+            extrapolate();
+            advectVelocity();
+            advectDensity();
 
-        // Interaction
-        addTap(1, 50, 'r', 75);
+            // Interaction
+            addTap(1, 50, 'r', 75);
 
-        // Debug
-        //debugDivergence();
-        //debugTotalDensity();
+            // Debug
+            //debugDivergence();
+            //debugTotalDensity();
+        }
     }
 
     public void addGravity() {
@@ -265,6 +272,11 @@ public class Simulator {
                 }
             }
         }
+    }
+
+    // Interaction
+    public void toggleSimulation() {
+        isPaused = !isPaused;
     }
 
     // Debugging

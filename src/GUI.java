@@ -1,9 +1,15 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class GUI extends JPanel {
-    private final Simulator simulator; // Reference simulator
+    // References
+    private final Simulator simulator;
+
+    // Variables
     private final int CELL_SIZE; // Cell size in pixels
+
+    // Components
     static JFrame frame = new JFrame("Fluid Sim"); // Frame for program
     private JPanel gridPanel; // Grid renderer
     private JPanel mainPanel; // Main display panel
@@ -27,6 +33,32 @@ public class GUI extends JPanel {
 
         // Create control panel
         createControlPanel();
+
+        // Button functionalities
+        playButton.addActionListener(e -> {
+            simulator.toggleSimulation();
+            if (simulator.isPaused) {
+                playButton.setText("Pause");
+            } else {
+                playButton.setText("Play");
+            }
+        });
+        slowButton.addActionListener(e -> {
+            if (simulator.delay >= 160) {
+                slowButton.setEnabled(false);
+            } else {
+                slowButton.setEnabled(true);
+            }
+            simulator.delay += 4;
+        });
+        fastButton.addActionListener(e -> {
+            if (simulator.delay > 2) {
+                fastButton.setEnabled(false);
+            } else {
+                fastButton.setEnabled(true);
+            }
+            simulator.delay -= 2;
+        });
     }
 
     // Create grid panel
@@ -143,14 +175,14 @@ public class GUI extends JPanel {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 800);
 
-        //create gui and add simulator
+        // Create GUI and add Simulator
         GUI gui = new GUI(simulator);
         frame.add(gui);
         frame.setLocationRelativeTo(null); //set frame to centre screen
         frame.setVisible(true); //set visible
 
-        //routinely update
-        //Define 60fps timer
+        // Update
+        // Define 60fps timer
         Timer timer = new Timer(simulator.delay, e -> {
             simulator.stepSimulation();
             gui.update();
