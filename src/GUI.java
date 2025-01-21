@@ -43,6 +43,7 @@ public class GUI extends JPanel {
         controlsText.setText("Controls:\n"
                 + "Left Click: Repel\n"
                 + "Right Click: Attract\n"
+                + "R: Reset\n"
                 + "Space: Pause/Play\n"
                 + "E: Increase Speed\n"
                 + "Q: Decrease Speed\n"
@@ -72,9 +73,9 @@ public class GUI extends JPanel {
             simulator.toggleSimulation();
             // Switch button text
             if (simulator.isPaused) {
-                playButton.setText("Play");
+                playButton.setText("▶");
             } else {
-                playButton.setText("Pause");
+                playButton.setText("||");
             }
         });
         slowButton.addActionListener(e -> {
@@ -95,76 +96,122 @@ public class GUI extends JPanel {
         });
 
         // Key bindings
-        AbstractAction toggleSimulationAction = new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                // Pause/Play simulation
-                simulator.toggleSimulation();
-                // Switch button text
-                if (simulator.isPaused) {
-                    playButton.setText("Play");
-                } else {
-                    playButton.setText("Pause");
+        if (true) {
+            AbstractAction toggleSimulationAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    // Pause/Play simulation
+                    simulator.toggleSimulation();
+                    // Switch button text
+                    if (simulator.isPaused) {
+                        playButton.setText("▶");
+                    } else {
+                        playButton.setText("||");
+                    }
                 }
-            }
-        };
-        AbstractAction slowDownAction = new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                // Disable if too slow
-                fastButton.setEnabled(simulator.delay > 2);
-                slowButton.setEnabled(simulator.delay < 320);
-                // Double the delay and set it
-                if (simulator.delay < 320) {
-                    simulator.delay *= 2;
-                    timer.setDelay(simulator.delay);
+            };
+            AbstractAction slowDownAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    // Disable if too slow
+                    fastButton.setEnabled(simulator.delay > 2);
+                    slowButton.setEnabled(simulator.delay < 320);
+                    // Double the delay and set it
+                    if (simulator.delay < 320) {
+                        simulator.delay *= 2;
+                        timer.setDelay(simulator.delay);
+                    }
                 }
-            }
-        };
-        AbstractAction speedUpAction = new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                // Disable if too fast
-                fastButton.setEnabled(simulator.delay > 2);
-                slowButton.setEnabled(simulator.delay < 320);
-                // Halve the delay and set it
-                if (simulator.delay > 2) {
-                    simulator.delay /= 2;
-                    timer.setDelay(simulator.delay);
+            };
+            AbstractAction speedUpAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    // Disable if too fast
+                    fastButton.setEnabled(simulator.delay > 2);
+                    slowButton.setEnabled(simulator.delay < 320);
+                    // Halve the delay and set it
+                    if (simulator.delay > 2) {
+                        simulator.delay /= 2;
+                        timer.setDelay(simulator.delay);
+                    }
                 }
-            }
-        };
-        AbstractAction toggleArrowsAction = new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                simulator.showVectorArrows = !simulator.showVectorArrows;
-            }
-        };
-        // Define key bindings
-        InputMap inputMap = center.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = center.getActionMap();
-        inputMap.put(KeyStroke.getKeyStroke("SPACE"), "toggleSimulation");
-        actionMap.put("toggleSimulation", toggleSimulationAction);
-        inputMap.put(KeyStroke.getKeyStroke("E"), "speedUp");
-        actionMap.put("speedUp", speedUpAction);
-        inputMap.put(KeyStroke.getKeyStroke("Q"), "slowDown");
-        actionMap.put("slowDown", slowDownAction);
-        inputMap.put(KeyStroke.getKeyStroke("V"), "toggleArrows");
-        actionMap.put("toggleArrows", toggleArrowsAction);
+            };
+            AbstractAction toggleArrowsAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    simulator.showVectorArrows = !simulator.showVectorArrows;
+                }
+            };
+            AbstractAction resetAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    // Pause simulation
+                    if (!simulator.isPaused) {
+                        simulator.toggleSimulation();
+                        playButton.setText("▶");
+                    }
+                    // Reset all density and velocity values
+                    simulator.resetDensity();
+                }
+            };
+            // Define key bindings
+            InputMap inputMap = center.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+            ActionMap actionMap = center.getActionMap();
+            inputMap.put(KeyStroke.getKeyStroke("SPACE"), "toggleSimulation");
+            actionMap.put("toggleSimulation", toggleSimulationAction);
+            inputMap.put(KeyStroke.getKeyStroke("E"), "speedUp");
+            actionMap.put("speedUp", speedUpAction);
+            inputMap.put(KeyStroke.getKeyStroke("Q"), "slowDown");
+            actionMap.put("slowDown", slowDownAction);
+            inputMap.put(KeyStroke.getKeyStroke("V"), "toggleArrows");
+            actionMap.put("toggleArrows", toggleArrowsAction);
+            inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
+            actionMap.put("reset", resetAction);
+        }
 
-        // Focys on main panel
+        // Menu bar
+        JPanel settingsPanel = new JPanel();
+        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+        settingsPanel.setPreferredSize(new Dimension(250, 800));
+        settingsPanel.setBorder(BorderFactory.createTitledBorder("Settings"));
+        // Gravity settings
+        JLabel gravityLabel = new JLabel("Gravity:");
+        JSlider gravitySlider = new JSlider(JSlider.HORIZONTAL, -10, 10, 0);
+        gravitySlider.setMajorTickSpacing(2); gravitySlider.setPaintTicks(true); gravitySlider.setPaintLabels(true);
+        JLabel gravityValueLabel = new JLabel("Value: 0");
+        gravitySlider.addChangeListener(e -> {
+            int value = gravitySlider.getValue();
+            gravityValueLabel.setText("Value: " + value);
+            simulator.gravity = value;
+        });
+        // Viscosity settings
+        // Over-relaxation settings
+        // Arrow settings
+        // Tap settings
+        // Apply Tap settings
+
+        // Add components to panel
+        settingsPanel.add(gravityLabel); settingsPanel.add(gravitySlider); settingsPanel.add(gravityValueLabel);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        frame.add(settingsPanel, BorderLayout.EAST);
+        frame.setVisible(true);
+
+        // Focus on main panel
         mainPanel.setFocusable(true); mainPanel.requestFocusInWindow();
         playButton.setFocusable(false); slowButton.setFocusable(false); fastButton.setFocusable(false);
 
         // Dark colour theme
-        frame.setBackground(Color.darkGray);
-        center.setBackground(Color.darkGray);
-        mainPanel.setBackground(Color.darkGray);
-        gridPanel.setBackground(Color.darkGray);
-        controlPanel.setBackground(Color.darkGray);
-        buttonPanel.setBackground(Color.darkGray);
-        controlsText.setBackground(Color.lightGray);
-        scrollPane.setBackground(Color.darkGray);
+        if (true) {
+            frame.setBackground(Color.darkGray);
+            center.setBackground(Color.darkGray);
+            mainPanel.setBackground(Color.darkGray);
+            gridPanel.setBackground(Color.darkGray);
+            controlPanel.setBackground(Color.darkGray);
+            buttonPanel.setBackground(Color.darkGray);
+            controlsText.setBackground(Color.lightGray);
+            scrollPane.setBackground(Color.darkGray);
+        }
     }
 
     // Create panels
@@ -232,10 +279,15 @@ public class GUI extends JPanel {
                     frames = 0; // Reset frame counter
                     oldTime = currentTime; // Reset time counter
                 }
-                // Draw FPS
+                // Average pressure counter
+                double avgPressure = simulator.totalPressure / countFluidCells();
+
+                // Draw Counters
                 g.setColor(Color.WHITE);
                 g.setFont(new Font("Arial", Font.BOLD, 16));
                 g.drawString(String.format("FPS: %.2f", fps), 10, 20);
+                g.drawString(String.format("Pressure: %.2f", avgPressure), 10, 40);
+
             }
         };
 
@@ -283,12 +335,25 @@ public class GUI extends JPanel {
     public static void createAndShowGUI(Simulator simulator) {
         // Create new JFrame
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 800);
+        frame.setSize(1000, 800);
 
         // Create GUI and add Simulator
         GUI gui = new GUI(simulator);
         frame.add(gui);
         frame.setLocationRelativeTo(null); // Set location to centre
         frame.setVisible(true); // Set visible
+    }
+
+    // Count fluid cells
+    public int countFluidCells() {
+        int count = 0;
+        for (int x = 0; x < simulator.gridWidth; x++) {
+            for (int y = 0; y < simulator.gridHeight; y++) {
+                if (simulator.getGrid().getCell(x, y).state == 1) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }

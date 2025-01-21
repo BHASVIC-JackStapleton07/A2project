@@ -11,13 +11,14 @@ public class Simulator {
    // Constants
    public int delay = 16; // GUI timestep
     double timestep = 0.05; // Simulator timestep
-    double gravity = 5;
+    double gravity = 0;
     double overrelaxation = 1.0;
 
     // Visual
     public boolean showVectorArrows;
     public double arrowSpacing = 6;
     public float maxDensity = 10;
+    public double totalPressure;
 
     // Functionality
     public boolean isPaused = true;
@@ -41,6 +42,7 @@ public class Simulator {
         // If paused, don't play
         if (!isPaused) {
             // Physics
+            addGravity();
             maintainZeroDivergence();
             extrapolate();
             advectVelocity();
@@ -71,6 +73,8 @@ public class Simulator {
     public void maintainZeroDivergence() {
         // Coefficients
         double cp = 0.1 / timestep;
+        // Reset total pressure
+        totalPressure = 0;
 
         // Loop through all cells with Gauss-Seidel iteration
         for (int n = 0; n < 20; n++) {
@@ -90,6 +94,7 @@ public class Simulator {
                             double div = grid.getCell(x+1,y).velocityX - cell.velocityX
                                     + grid.getCell(x,y+1).velocityY - cell.velocityY;
                             double p = -div / s;
+                            totalPressure += Math.abs(p);
                             // Apply overrelaxation
                             p *= overrelaxation;
                             cell.pressure += cp * p;
@@ -303,6 +308,19 @@ public class Simulator {
     public void toggleSimulation() {
         // Toggle pause
         isPaused = !isPaused;
+    }
+
+    public void resetDensity() {
+        // Loop through all cells
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                // Reset density
+                grid.getCell(x, y).density = 0;
+                // Reset velocity
+                grid.getCell(x, y).velocityX = 0;
+                grid.getCell(x, y).velocityY = 0;
+            }
+        }
     }
 
     // Debugging
