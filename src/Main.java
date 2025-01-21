@@ -1,7 +1,8 @@
 
 public class Main {
     public static void main(String[] args) {
-        Simulator sim = new Simulator(); //initialize
+        // Create simulator and GUI
+        Simulator sim = new Simulator();
         GUI.createAndShowGUI(sim);
     }
 }

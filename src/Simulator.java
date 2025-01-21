@@ -1,3 +1,5 @@
+
+
 public class Simulator {
     // References
     private final Grid grid;
@@ -18,7 +20,7 @@ public class Simulator {
     public float maxDensity = 10;
 
     // Functionality
-    public boolean isPaused = false;
+    public boolean isPaused = true;
 
     // Constructor
     public Simulator() {
@@ -54,10 +56,11 @@ public class Simulator {
     }
 
     public void addGravity() {
+        // For each cell
         for (int x = 0; x < gridWidth; x++) {
             for (int y = 0; y < gridHeight; y++) {
                 Cell cell = grid.getCell(x, y);
-
+                // Apply gravity to fluid cells
                 if (cell.state == 1) {
                     cell.velocityY += gravity * timestep;
                 }
@@ -66,26 +69,31 @@ public class Simulator {
     }
 
     public void maintainZeroDivergence() {
+        // Coefficients
         double cp = 0.1 / timestep;
 
+        // Loop through all cells with Gauss-Seidel iteration
         for (int n = 0; n < 20; n++) {
             for (int y = 0; y < gridHeight; y++) {
                 for (int x = 0; x < gridWidth; x++) {
                     Cell cell = grid.getCell(x, y);
-                    if (cell.state == 1) {
+                    if (cell.state == 1) { // If fluid cell
+                        // Get neighbour states
                         double sx0 = grid.getCell(x-1,y).state;
                         double sx1 = grid.getCell(x+1,y).state;
                         double sy0 = grid.getCell(x,y-1).state;
                         double sy1 = grid.getCell(x,y+1).state;
-                        double s = sx0 + sx1 + sy0 + sy1;
+                        double s = sx0 + sx1 + sy0 + sy1; // Total states
 
                         if (s != 0) {
+                            // Calculate divergence and pressure
                             double div = grid.getCell(x+1,y).velocityX - cell.velocityX
                                     + grid.getCell(x,y+1).velocityY - cell.velocityY;
                             double p = -div / s;
+                            // Apply overrelaxation
                             p *= overrelaxation;
                             cell.pressure += cp * p;
-
+                            // Adjust velocities based on pressure
                             cell.velocityX -= sx0 * p;
                             grid.getCell(x+1,y).velocityX += sx1 * p;
                             cell.velocityY -= sy0 * p;
@@ -98,40 +106,49 @@ public class Simulator {
     }
 
     public void extrapolate() {
+        // Loop through all cells
         for (int x = 0; x < gridWidth; x++) {
+            // Copy neighbour velocities
             grid.getCell(x, 0).velocityX = grid.getCell(x,1).velocityX;
             grid.getCell(x, gridHeight-1).velocityX = grid.getCell(x,gridHeight-2).velocityX;
         }
         for (int y = 0; y < gridHeight; y++) {
+            // Copy neighbour velocities
             grid.getCell(0, y).velocityY = grid.getCell(1,y).velocityY;
             grid.getCell(gridWidth-1, y).velocityY = grid.getCell(gridWidth-2,y).velocityY;
         }
     }
 
     public void advectVelocity() {
+        // Temporary velocity arrays
         double[][] newVelocityX = new double[gridWidth][gridHeight];
         double[][] newVelocityY = new double[gridWidth][gridHeight];
+        // Loop through all cells
         for (int x = 1; x < gridWidth; x++) {
             for (int y = 1; y < gridHeight; y++) {
                 Cell cell = grid.getCell(x, y);
+                // If fluid cell, and left neighbour is fluid cell
                 if (cell.state != 0 && grid.getCell(x-1,y).state != 0 && y < gridHeight - 1) {
+                    // Calculate position and velocity
                     double xVal = x;
                     double yVal = y + 0.5;
                     double u = cell.velocityX;
                     double v = avgV(x, y);
 
+                    // Calculate source position and new velocitu
                     xVal -= timestep * u;
                     yVal -= timestep * v;
                     u = lerpPoint(xVal, yVal, 0);
                     newVelocityX[x][y] = u;
                 }
-
+                // If fluid cell, and top neighbour is fluid cell
                 if (cell.state != 0.0 && grid.getCell(x, y-1).state != 0.0 && x < gridWidth - 1) {
+                    // Calculate position and velocity
                     double xVal = x + 0.5;
                     double yVal = y;
                     double u = avgU(x, y);
                     double v = cell.velocityY;
-
+                    // Calculate source position and new velocity
                     xVal -= timestep * u;
                     yVal -= timestep * v;
                     v = lerpPoint(xVal, yVal, 1);
@@ -151,16 +168,19 @@ public class Simulator {
     }
 
     public void advectDensity() {
+        // Temporary density array
         double[][] newDensity = new double[gridWidth][gridHeight];
+        // Loop through all cells
         for (int x = 0; x < gridWidth; x++) {
             for (int y = 0; y < gridHeight; y++) {
                 Cell cell = grid.getCell(x, y);
-                if (cell.state != 0) {
+                if (cell.state != 0) { // If fluid cell
+                    // Calculate position and velocity
                     double u = (cell.velocityX + grid.getCell(x+1,y).velocityX) * 0.5;
                     double v = (cell.velocityY + grid.getCell(x,y+1).velocityY) * 0.5;
                     double xVal = x + 0.5 - timestep * u;
                     double yVal = y + 0.5 - timestep * v;
-
+                    // Calculate source position and new density
                     newDensity[x][y] = lerpPoint(xVal, yVal, 2);
                 }
             }
@@ -175,7 +195,9 @@ public class Simulator {
     }
 
     public void addTap(int x, int y, char dir, double speed) {
+        // Add density
         grid.getCell(x,y).density += 10;
+        // Add velocity
         switch (dir) {
             case 'u':
                 grid.getCell(x, y).velocityY -= speed;
@@ -202,11 +224,12 @@ public class Simulator {
         x = Math.max(Math.min(x, gridWidth-2), 1);
         y = Math.max(Math.min(y, gridHeight-2), 1);
 
+        // Declare x and y offsets
         double dx = 0.0;
         double dy = 0.0;
 
-        //Adjust dx and dy based on field
-        //0: velocityX, 1: velocityY, 2: density
+        // Adjust dx and dy based on field
+        // 0: velocityX, 1: velocityY, 2: density
         if (choice == 0) {
             dy = 0.5;
         } else if (choice == 1) {
@@ -241,7 +264,7 @@ public class Simulator {
     private double getFieldValue(int x, int y, int choice) {
         Cell cell = grid.getCell(x, y);
 
-        //0: velocityX, 1: velocityY, 2: density
+        // 0: velocityX, 1: velocityY, 2: density
         if (choice == 0) {
             return cell.velocityX;
         } else if (choice == 1) {
@@ -263,8 +286,10 @@ public class Simulator {
 
     // Boundaries
     private void setBoundaries() {
+        // Loop through all cells
         for (int y = 0; y < gridHeight; y++) {
             for (int x = 0; x < gridWidth; x++) {
+                // Set boundary if on edge
                 if (x == 0 || x == gridWidth-1 || y == 0 || y == gridHeight-1) {
                     grid.getCell(x,y).state = 0;
                     grid.getCell(x,y).velocityY = 0;
@@ -276,6 +301,7 @@ public class Simulator {
 
     // Interaction
     public void toggleSimulation() {
+        // Toggle pause
         isPaused = !isPaused;
     }
 
@@ -323,7 +349,7 @@ public class Simulator {
     }
 
 
-    // getter
+    // Getters
     public Grid getGrid() {
         return grid;
     }
