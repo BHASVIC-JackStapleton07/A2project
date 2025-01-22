@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 public class GUI extends JPanel {
     // References
@@ -95,6 +94,185 @@ public class GUI extends JPanel {
             timer.setDelay(simulator.delay);
         });
 
+        // Menu bar
+        JPanel settingsPanel = new JPanel();
+        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+        settingsPanel.setBorder(BorderFactory.createTitledBorder("Settings"));
+        // Gravity settings
+        JLabel gravityLabel = new JLabel("Gravity:");
+        JSlider gravitySlider = new JSlider(JSlider.HORIZONTAL, -10, 10, 0);
+        gravitySlider.setMajorTickSpacing(2); gravitySlider.setPaintTicks(true); gravitySlider.setPaintLabels(true);
+        gravitySlider.addChangeListener(e -> {
+            int value = gravitySlider.getValue();
+            simulator.gravity = value;
+        });
+        // Viscosity settings
+        JLabel viscosityLabel = new JLabel("Viscosity:");
+        JSlider viscositySlider = new JSlider(JSlider.HORIZONTAL, 0, 10, 0);
+        viscositySlider.setMajorTickSpacing(2); viscositySlider.setPaintTicks(true); viscositySlider.setPaintLabels(true);
+        viscositySlider.addChangeListener(e -> {
+            int value = viscositySlider.getValue();
+            simulator.viscosity = value;
+        });
+        // Over-relaxation settings
+        JLabel overRelaxationLabel = new JLabel("Over-Relaxation:");
+        JSlider overRelaxationSlider = new JSlider(JSlider.HORIZONTAL, 10, 19, 15);
+        overRelaxationSlider.setMajorTickSpacing(2); overRelaxationSlider.setPaintTicks(true); overRelaxationSlider.setPaintLabels(true);
+        overRelaxationSlider.addChangeListener(e -> {
+            int value = overRelaxationSlider.getValue();
+            simulator.overrelaxation = (double) value / 10;
+        });
+        // Arrow spacing settings
+        JLabel arrowSpacingLabel = new JLabel("Arrow Spacing:");
+        JSlider arrowSpacingSlider = new JSlider(JSlider.HORIZONTAL, 1, 20, 6);
+        arrowSpacingSlider.setMajorTickSpacing(2); arrowSpacingSlider.setPaintTicks(true); arrowSpacingSlider.setPaintLabels(true);
+        arrowSpacingSlider.setEnabled(simulator.showVectorArrows);
+        arrowSpacingSlider.addChangeListener(e -> {
+            int value = arrowSpacingSlider.getValue();
+            simulator.arrowSpacing = value;
+        });
+        // Arrow show settings
+        JCheckBox showArrowsCheckBox = new JCheckBox("Show Velocity Arrows");
+        showArrowsCheckBox.setSelected(simulator.showVectorArrows);
+        showArrowsCheckBox.addActionListener(e -> {
+            simulator.showVectorArrows = showArrowsCheckBox.isSelected();
+            arrowSpacingSlider.setEnabled(showArrowsCheckBox.isSelected());
+        });
+
+        // Leak density settings
+        JLabel leakDensityLabel = new JLabel("Leak Density:");
+        JCheckBox leakDensityCheckBox = new JCheckBox();
+        leakDensityCheckBox.setSelected(simulator.leakDensity);
+        leakDensityCheckBox.addActionListener(e -> {
+            simulator.leakDensity = leakDensityCheckBox.isSelected();
+        });
+
+        // Tap settings
+        // Tap 1
+        JLabel tap1Label = new JLabel("Tap 1 Settings:");
+        JLabel tap1XLabel = new JLabel("X:");
+        JSlider tap1XSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 1);
+        tap1XSlider.setMajorTickSpacing(10); tap1XSlider.setPaintTicks(true); tap1XSlider.setPaintLabels(true);
+        tap1XSlider.addChangeListener(e -> {
+            int x = tap1XSlider.getValue();
+            simulator.tap1X = x;
+        });
+        JLabel tap1YLabel = new JLabel("Y:");
+        JSlider tap1YSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        tap1YSlider.setMajorTickSpacing(10); tap1YSlider.setPaintTicks(true); tap1YSlider.setPaintLabels(true);
+        tap1YSlider.addChangeListener(e -> {
+            int y = tap1YSlider.getValue();
+            simulator.tap1Y = y;
+        });
+        JLabel tap1SpeedLabel = new JLabel("Speed:");
+        JSlider tap1SpeedSlider = new JSlider(JSlider.HORIZONTAL, 0, 75, 50);
+        tap1SpeedSlider.setMajorTickSpacing(15); tap1SpeedSlider.setPaintTicks(true); tap1SpeedSlider.setPaintLabels(true);
+        tap1SpeedSlider.addChangeListener(e -> {
+            int speed = tap1SpeedSlider.getValue();
+            simulator.tap1Speed = speed;
+        });
+        JLabel tap1DirectionLabel = new JLabel("Direction:");
+        Character[] choices = {'r', 'd', 'u', 'l'};
+        JComboBox<Character> tap1DirectionComboBox = new JComboBox<Character>(choices);
+        tap1DirectionComboBox.addActionListener(e -> {
+            char direction = (char) tap1DirectionComboBox.getSelectedItem();
+            simulator.tap1Dir = direction;
+        });
+        JLabel tap1OnButton = new JLabel("On:");
+        JCheckBox tap1OnCheckBox = new JCheckBox();
+        tap1OnCheckBox.setSelected(simulator.tap1On);
+        tap1OnCheckBox.addActionListener(e -> {
+            simulator.tap1On = tap1OnCheckBox.isSelected();
+            tap1XSlider.setEnabled(tap1OnCheckBox.isSelected());
+            tap1YSlider.setEnabled(tap1OnCheckBox.isSelected());
+            tap1SpeedSlider.setEnabled(tap1OnCheckBox.isSelected());
+            tap1DirectionComboBox.setEnabled(tap1OnCheckBox.isSelected());
+        });
+        // Tap 2 Settings
+        JLabel tap2Label = new JLabel("Tap 2 Settings:");
+        JLabel tap2XLabel = new JLabel("X:");
+        JSlider tap2XSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        tap2XSlider.setMajorTickSpacing(10); tap2XSlider.setPaintTicks(true); tap2XSlider.setPaintLabels(true);
+        tap2XSlider.addChangeListener(e -> {
+            int x = tap2XSlider.getValue();
+            simulator.tap2X = x;
+        });
+        JLabel tap2YLabel = new JLabel("Y:");
+        JSlider tap2YSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        tap2YSlider.setMajorTickSpacing(10); tap2YSlider.setPaintTicks(true); tap2YSlider.setPaintLabels(true);
+        tap2YSlider.addChangeListener(e -> {
+            int y = tap2YSlider.getValue();
+            simulator.tap2Y = y;
+        });
+        JLabel tap2SpeedLabel = new JLabel("Speed:");
+        JSlider tap2SpeedSlider = new JSlider(JSlider.HORIZONTAL, 0, 75, 50);
+        tap2SpeedSlider.setMajorTickSpacing(15); tap2SpeedSlider.setPaintTicks(true); tap2SpeedSlider.setPaintLabels(true);
+        tap2SpeedSlider.addChangeListener(e -> {
+            int speed = tap2SpeedSlider.getValue();
+            simulator.tap2Speed = speed;
+        });
+        JLabel tap2DirectionLabel = new JLabel("Direction:");
+        JComboBox<Character> tap2DirectionComboBox = new JComboBox<Character>(choices);
+        tap2DirectionComboBox.addActionListener(e -> {
+            char direction = (char) tap2DirectionComboBox.getSelectedItem();
+            simulator.tap2Dir = direction;
+        });
+        JLabel tap2OnButton = new JLabel("On:");
+        JCheckBox tap2OnCheckBox = new JCheckBox();
+        tap2OnCheckBox.setSelected(simulator.tap2On);
+        tap2OnCheckBox.addActionListener(e -> {
+            simulator.tap2On = tap2OnCheckBox.isSelected();
+            tap2XSlider.setEnabled(tap2OnCheckBox.isSelected());
+            tap2YSlider.setEnabled(tap2OnCheckBox.isSelected());
+            tap2SpeedSlider.setEnabled(tap2OnCheckBox.isSelected());
+            tap2DirectionComboBox.setEnabled(tap2OnCheckBox.isSelected());
+        });
+        tap2XSlider.setEnabled(simulator.tap2On); tap2YSlider.setEnabled(simulator.tap2On);
+        tap2SpeedSlider.setEnabled(simulator.tap2On); tap2DirectionComboBox.setEnabled(simulator.tap2On);
+        tap2DirectionComboBox.setSelectedItem(simulator.tap2Dir);
+
+        // Scroll pane
+        JScrollPane settingsScrollPane = new JScrollPane(settingsPanel);
+        settingsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        settingsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        settingsScrollPane.setPreferredSize(new Dimension(250, 800));
+
+        // Add components to panel
+        settingsPanel.add(gravityLabel); settingsPanel.add(gravitySlider);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(viscosityLabel); settingsPanel.add(viscositySlider);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(overRelaxationLabel); settingsPanel.add(overRelaxationSlider);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(leakDensityLabel); settingsPanel.add(leakDensityCheckBox);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(showArrowsCheckBox);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(arrowSpacingLabel); settingsPanel.add(arrowSpacingSlider);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(tap1OnButton); settingsPanel.add(tap1OnCheckBox);
+        settingsPanel.add(tap1Label); settingsPanel.add(tap1XLabel); settingsPanel.add(tap1XSlider);
+        settingsPanel.add(tap1YLabel); settingsPanel.add(tap1YSlider);
+        settingsPanel.add(tap1SpeedLabel); settingsPanel.add(tap1SpeedSlider);
+        settingsPanel.add(tap1DirectionLabel); settingsPanel.add(tap1DirectionComboBox);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(tap2OnButton); settingsPanel.add(tap2OnCheckBox);
+        settingsPanel.add(tap2Label); settingsPanel.add(tap2XLabel); settingsPanel.add(tap2XSlider);
+        settingsPanel.add(tap2YLabel); settingsPanel.add(tap2YSlider);
+        settingsPanel.add(tap2SpeedLabel); settingsPanel.add(tap2SpeedSlider);
+        settingsPanel.add(tap2DirectionLabel); settingsPanel.add(tap2DirectionComboBox);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        frame.add(settingsScrollPane, BorderLayout.EAST);
+        frame.setVisible(true);
+
         // Key bindings
         if (true) {
             AbstractAction toggleSimulationAction = new AbstractAction() {
@@ -140,6 +318,7 @@ public class GUI extends JPanel {
                 @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     simulator.showVectorArrows = !simulator.showVectorArrows;
+                    showArrowsCheckBox.setSelected(!showArrowsCheckBox.isSelected());
                 }
             };
             AbstractAction resetAction = new AbstractAction() {
@@ -168,34 +347,6 @@ public class GUI extends JPanel {
             inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
             actionMap.put("reset", resetAction);
         }
-
-        // Menu bar
-        JPanel settingsPanel = new JPanel();
-        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
-        settingsPanel.setPreferredSize(new Dimension(250, 800));
-        settingsPanel.setBorder(BorderFactory.createTitledBorder("Settings"));
-        // Gravity settings
-        JLabel gravityLabel = new JLabel("Gravity:");
-        JSlider gravitySlider = new JSlider(JSlider.HORIZONTAL, -10, 10, 0);
-        gravitySlider.setMajorTickSpacing(2); gravitySlider.setPaintTicks(true); gravitySlider.setPaintLabels(true);
-        JLabel gravityValueLabel = new JLabel("Value: 0");
-        gravitySlider.addChangeListener(e -> {
-            int value = gravitySlider.getValue();
-            gravityValueLabel.setText("Value: " + value);
-            simulator.gravity = value;
-        });
-        // Viscosity settings
-        // Over-relaxation settings
-        // Arrow settings
-        // Tap settings
-        // Apply Tap settings
-
-        // Add components to panel
-        settingsPanel.add(gravityLabel); settingsPanel.add(gravitySlider); settingsPanel.add(gravityValueLabel);
-        settingsPanel.add(Box.createVerticalStrut(10));
-
-        frame.add(settingsPanel, BorderLayout.EAST);
-        frame.setVisible(true);
 
         // Focus on main panel
         mainPanel.setFocusable(true); mainPanel.requestFocusInWindow();

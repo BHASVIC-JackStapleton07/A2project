@@ -12,16 +12,23 @@ public class Simulator {
    public int delay = 16; // GUI timestep
     double timestep = 0.05; // Simulator timestep
     double gravity = 0;
-    double overrelaxation = 1.0;
+    double overrelaxation = 1.5;
+    double viscosity = 0.0;
 
     // Visual
     public boolean showVectorArrows;
     public double arrowSpacing = 6;
     public float maxDensity = 10;
     public double totalPressure;
+    public boolean leakDensity = true;
 
     // Functionality
     public boolean isPaused = true;
+
+    // Taps
+    int tap1X = 1; int tap1Y = 50; int tap2Y = 1; int tap2X = 50;
+    char tap1Dir = 'r'; char tap2Dir = 'd'; double tap1Speed = 50; double tap2Speed = 50;
+    boolean tap1On = true; boolean tap2On = false;
 
     // Constructor
     public Simulator() {
@@ -32,7 +39,7 @@ public class Simulator {
         // Set boundary
         setBoundaries();
         // Debugging
-        showVectorArrows = true;
+        showVectorArrows = false;
 
         // Test cells
     }
@@ -41,6 +48,10 @@ public class Simulator {
     public void stepSimulation() {
         // If paused, don't play
         if (!isPaused) {
+            // Interaction
+            addTap(tap1X, tap1Y, tap1Dir, tap1Speed, tap1On);
+            addTap(tap2X, tap2Y, tap2Dir, tap2Speed, tap2On);
+
             // Physics
             addGravity();
             maintainZeroDivergence();
@@ -48,15 +59,15 @@ public class Simulator {
             advectVelocity();
             advectDensity();
 
-            // Interaction
-            addTap(1, 50, 'r', 75);
+            if (leakDensity) {
+                leakDensity();
+            }
 
             // Debug
             //debugDivergence();
             //debugTotalDensity();
         }
     }
-
     public void addGravity() {
         // For each cell
         for (int x = 0; x < gridWidth; x++) {
@@ -199,25 +210,27 @@ public class Simulator {
         }
     }
 
-    public void addTap(int x, int y, char dir, double speed) {
-        // Add density
-        grid.getCell(x,y).density += 10;
-        // Add velocity
-        switch (dir) {
-            case 'u':
-                grid.getCell(x, y).velocityY -= speed;
-                break;
-            case 'd':
-                grid.getCell(x, y).velocityY += speed;
-                break;
-            case 'l':
-                grid.getCell(x, y).velocityX -= speed;
-                break;
-            case 'r':
-                grid.getCell(x, y).velocityX += speed;
-                break;
-            default:
-                break;
+    public void addTap(int x, int y, char dir, double speed, boolean on) {
+        if (on) {
+            // Add density
+            grid.getCell(x, y).density += 10;
+            // Add velocity
+            switch (dir) {
+                case 'u':
+                    grid.getCell(x, y).velocityY -= speed;
+                    break;
+                case 'd':
+                    grid.getCell(x, y).velocityY += speed;
+                    break;
+                case 'l':
+                    grid.getCell(x, y).velocityX -= speed;
+                    break;
+                case 'r':
+                    grid.getCell(x, y).velocityX += speed;
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -322,6 +335,18 @@ public class Simulator {
             }
         }
     }
+
+    private void leakDensity() {
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                Cell cell = grid.getCell(x, y);
+                if (cell.state == 1) {
+                    cell.density *= 0.99;
+                }
+            }
+        }
+    }
+
 
     // Debugging
     private void debugVelocities() {
