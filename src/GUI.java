@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class GUI extends JPanel {
     // References
@@ -10,6 +11,8 @@ public class GUI extends JPanel {
     private static int frames = 0;
     private static long oldTime = System.nanoTime();
     private static double fps = 0;
+    String baseHexCode = "#169BFF";
+    int colourOption = 1;
 
     // Components
     static JFrame frame = new JFrame("Fluid Sim"); // Frame for program
@@ -46,7 +49,7 @@ public class GUI extends JPanel {
                 + "Space: Pause/Play\n"
                 + "E: Increase Speed\n"
                 + "Q: Decrease Speed\n"
-                + "Tab: Menu\n"
+                + "F: Fill Random\n"
                 + "V: Toggle Arrows\n");
         controlsText.setEditable(false);
         controlsText.setLineWrap(true);
@@ -138,10 +141,68 @@ public class GUI extends JPanel {
             simulator.showVectorArrows = showArrowsCheckBox.isSelected();
             arrowSpacingSlider.setEnabled(showArrowsCheckBox.isSelected());
         });
-
+        // Colour Rendering settings
+        JLabel colourLabel = new JLabel("Colour Rendering:");
+        String colours[] = {"Red", "Orange", "Yellow", "Green", "Blue", "Light Blue", "Purple", "Pink", "White"};
+        JComboBox<String> colourComboBox = new JComboBox<String>(colours);
+        colourComboBox.setSelectedItem("Light Blue");
+        colourComboBox.addActionListener(e -> {
+            String colour = (String) colourComboBox.getSelectedItem();
+            switch (colour) {
+                case "Red":
+                    baseHexCode = "#FF0000";
+                    break;
+                case "Orange":
+                    baseHexCode = "#FFA500";
+                    break;
+                case "Yellow":
+                    baseHexCode = "#FFFF00";
+                    break;
+                case "Green":
+                    baseHexCode = "#00FF00";
+                    break;
+                case "Blue":
+                    baseHexCode = "#0000FF";
+                    break;
+                case "Purple":
+                    baseHexCode = "#800080";
+                    break;
+                case "Pink":
+                    baseHexCode = "#FFC0CB";
+                    break;
+                case "White":
+                    baseHexCode = "#FFFFFF";
+                    break;
+                case "Light Blue":
+                    baseHexCode = "#169BFF";
+                    break;
+                default:
+                    baseHexCode = "#FFFFFF";
+            }
+        });
+        // Rendering Option settings
+        JLabel colourOptionLabel = new JLabel("Rendering Option:");
+        String options[] = {"Density", "Velocity", "Pressure"};
+        JComboBox<String> optionComboBox = new JComboBox<String>(options);
+        optionComboBox.setSelectedItem("Density");
+        optionComboBox.addActionListener(e -> {
+            String option = (String) optionComboBox.getSelectedItem();
+            switch (option) {
+                case "Density":
+                    colourOption = 1;
+                    break;
+                case "Velocity":
+                    colourOption = 2;
+                    break;
+                case "Pressure":
+                    colourOption = 3;
+                    break;
+                default:
+                    colourOption = 1;
+            }
+        });
         // Leak density settings
-        JLabel leakDensityLabel = new JLabel("Leak Density:");
-        JCheckBox leakDensityCheckBox = new JCheckBox();
+        JCheckBox leakDensityCheckBox = new JCheckBox("Leak Density");
         leakDensityCheckBox.setSelected(simulator.leakDensity);
         leakDensityCheckBox.addActionListener(e -> {
             simulator.leakDensity = leakDensityCheckBox.isSelected();
@@ -235,7 +296,7 @@ public class GUI extends JPanel {
         JScrollPane settingsScrollPane = new JScrollPane(settingsPanel);
         settingsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         settingsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        settingsScrollPane.setPreferredSize(new Dimension(250, 800));
+        settingsScrollPane.setPreferredSize(new Dimension(300, 800));
 
         // Add components to panel
         settingsPanel.add(gravityLabel); settingsPanel.add(gravitySlider);
@@ -247,7 +308,13 @@ public class GUI extends JPanel {
         settingsPanel.add(overRelaxationLabel); settingsPanel.add(overRelaxationSlider);
         settingsPanel.add(Box.createVerticalStrut(10));
 
-        settingsPanel.add(leakDensityLabel); settingsPanel.add(leakDensityCheckBox);
+        settingsPanel.add(leakDensityCheckBox);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(colourLabel); settingsPanel.add(colourComboBox);
+        settingsPanel.add(Box.createVerticalStrut(10));
+
+        settingsPanel.add(colourOptionLabel); settingsPanel.add(optionComboBox);
         settingsPanel.add(Box.createVerticalStrut(10));
 
         settingsPanel.add(showArrowsCheckBox);
@@ -333,6 +400,13 @@ public class GUI extends JPanel {
                     simulator.resetDensity();
                 }
             };
+            AbstractAction fillAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // Fill grid with random densities
+                    simulator.fillRandom();
+                }
+            };
             // Define key bindings
             InputMap inputMap = center.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
             ActionMap actionMap = center.getActionMap();
@@ -346,6 +420,8 @@ public class GUI extends JPanel {
             actionMap.put("toggleArrows", toggleArrowsAction);
             inputMap.put(KeyStroke.getKeyStroke("R"), "reset");
             actionMap.put("reset", resetAction);
+            inputMap.put(KeyStroke.getKeyStroke("F"), "fill");
+            actionMap.put("fill", fillAction);
         }
 
         // Focus on main panel
@@ -387,7 +463,24 @@ public class GUI extends JPanel {
                         densityValue = Math.max(0, Math.min(max, densityValue)); // Clamp value
                         densityValue  = densityValue / max; // Normalize value
 
-                        g.setColor(new Color(densityValue, densityValue, densityValue)); // Set colour
+                        // Options for visualisation
+                        double value;
+                        switch (colourOption) {
+                            case 1: // Density
+                                value = 0.4 * cell.density;
+                                break;
+                            case 2: // Velocity
+                                value = 0.05 * Math.sqrt(cell.velocityX * cell.velocityX + cell.velocityY * cell.velocityY);
+                                break;
+                            case 3: // Pressure
+                                value = 0.1 * cell.pressure;
+                                break;
+                            default:
+                                value = 0;
+                        }
+
+                        Color cellColour = interpolateColour(baseHexCode, value);
+                        g.setColor(cellColour); // Set colour
 
                         // Draw cell at correct position and size
                         g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -446,6 +539,20 @@ public class GUI extends JPanel {
         int gridWidth = simulator.getGrid().getWidth() * CELL_SIZE;
         int gridHeight = simulator.getGrid().getHeight() * CELL_SIZE;
         gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
+    }
+
+    // Interpolate colour based on attribute
+    private Color interpolateColour(String baseHexCode, double value) {
+        //1: density, 2: velocity, 3: pressure
+        Color baseColour = Color.decode(baseHexCode); // Base colour
+        // Clamp value
+        value = Math.max(0, Math.min(1, value));
+        // Scale RGB based on value
+        int red = (int) (baseColour.getRed() * value);
+        int green = (int) (baseColour.getGreen() * value);
+        int blue = (int) (baseColour.getBlue() * value);
+
+        return new Color(red, green, blue);
     }
 
     private void drawArrow(Graphics2D g, int xStart, int yStart, int xEnd, int yEnd) {

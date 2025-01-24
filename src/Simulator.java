@@ -9,7 +9,7 @@ public class Simulator {
    int gridWidth;
 
    // Constants
-   public int delay = 16; // GUI timestep
+   public int delay = 8; // GUI timestep
     double timestep = 0.05; // Simulator timestep
     double gravity = 0;
     double overrelaxation = 1.5;
@@ -332,6 +332,8 @@ public class Simulator {
                 // Reset velocity
                 grid.getCell(x, y).velocityX = 0;
                 grid.getCell(x, y).velocityY = 0;
+                // Reset pressure
+                grid.getCell(x, y).pressure = 0;
             }
         }
     }
@@ -342,6 +344,17 @@ public class Simulator {
                 Cell cell = grid.getCell(x, y);
                 if (cell.state == 1) {
                     cell.density *= 0.99;
+                }
+            }
+        }
+    }
+
+    public void fillRandom() {
+        // Loop through all cells
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                if (grid.getCell(x,y).state == 1) {
+                    grid.getCell(x, y).density = Math.random() * 5;
                 }
             }
         }
