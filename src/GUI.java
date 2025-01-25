@@ -457,12 +457,6 @@ public class GUI extends JPanel {
                     for (int y = 0; y < grid.getHeight(); y++) {
                         Cell cell = grid.getCell(x, y);
 
-                        // Visualize cell density
-                        float max = simulator.maxDensity;
-                        float densityValue = (float) cell.density; // Get density value
-                        densityValue = Math.max(0, Math.min(max, densityValue)); // Clamp value
-                        densityValue  = densityValue / max; // Normalize value
-
                         // Options for visualisation
                         double value;
                         switch (colourOption) {
@@ -473,7 +467,7 @@ public class GUI extends JPanel {
                                 value = 0.05 * Math.sqrt(cell.velocityX * cell.velocityX + cell.velocityY * cell.velocityY);
                                 break;
                             case 3: // Pressure
-                                value = 0.1 * cell.pressure;
+                                value = 0.001 * cell.pressure;
                                 break;
                             default:
                                 value = 0;
