@@ -1,6 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class GUI extends JPanel {
     // References
@@ -13,6 +16,7 @@ public class GUI extends JPanel {
     private static double fps = 0;
     String baseHexCode = "#169BFF";
     int colourOption = 1;
+    private boolean isMousePressed = false;
 
     // Components
     static JFrame frame = new JFrame("Fluid Sim"); // Frame for program
@@ -28,6 +32,52 @@ public class GUI extends JPanel {
         this.simulator = simulator;
         CELL_SIZE = simulator.gridHeight / 15;
 
+        // Mouse listener
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // Get mouse press
+                isMousePressed = true;
+                applyMouseEffect(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                // Get mouse release
+                isMousePressed = false;
+            }
+        });
+
+        addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                // Get mouse drag
+                applyMouseEffect(e);
+            }
+        });
+
+        // Mouse input timer
+        Timer mouseTimer = new Timer(10, (ActionEvent e) -> {
+            if (isMousePressed) {
+                // Apply mouse effect if pressed
+                Point mousePos = getMousePosition();
+                if (mousePos != null) {
+                    int x = mousePos.x / CELL_SIZE;
+                    int y = mousePos.y / CELL_SIZE;
+
+                    // If in bounds
+                    if (x >= 0 && x < simulator.getGrid().getWidth() &&
+                            y >= 0 && y < simulator.getGrid().getHeight()) {
+
+                        int button = MouseEvent.BUTTON1; // Default to left click
+                        simulator.addMouseInfluence(x, y, button);
+                    }
+                }
+            }
+            repaint();
+        });
+        mouseTimer.start();
+
         // Layout
         JPanel center = new JPanel(new FlowLayout());
 
@@ -42,15 +92,17 @@ public class GUI extends JPanel {
 
         // Create controls text box
         JTextArea controlsText = new JTextArea(5, 20);
-        controlsText.setText("Controls:\n"
-                + "Left Click: Repel\n"
-                + "Right Click: Attract\n"
-                + "R: Reset\n"
-                + "Space: Pause/Play\n"
-                + "E: Increase Speed\n"
-                + "Q: Decrease Speed\n"
-                + "F: Fill Random\n"
-                + "V: Toggle Arrows\n");
+        controlsText.setText("""
+                Controls:
+                Left Click: Repel
+                Right Click: Attract
+                R: Reset
+                Space: Pause/Play
+                E: Increase Speed
+                Q: Decrease Speed
+                F: Fill Random
+                V: Toggle Arrows
+                """);
         controlsText.setEditable(false);
         controlsText.setLineWrap(true);
         controlsText.setWrapStyleWord(true);
@@ -143,7 +195,7 @@ public class GUI extends JPanel {
         });
         // Colour Rendering settings
         JLabel colourLabel = new JLabel("Colour Rendering:");
-        String colours[] = {"Red", "Orange", "Yellow", "Green", "Blue", "Light Blue", "Purple", "Pink", "White"};
+        String[] colours = {"Red", "Orange", "Yellow", "Green", "Blue", "Light Blue", "Purple", "Pink", "White"};
         JComboBox<String> colourComboBox = new JComboBox<String>(colours);
         colourComboBox.setSelectedItem("Light Blue");
         colourComboBox.addActionListener(e -> {
@@ -182,7 +234,7 @@ public class GUI extends JPanel {
         });
         // Rendering Option settings
         JLabel colourOptionLabel = new JLabel("Rendering Option:");
-        String options[] = {"Density", "Velocity", "Pressure"};
+        String[] options = {"Density", "Velocity", "Pressure"};
         JComboBox<String> optionComboBox = new JComboBox<String>(options);
         optionComboBox.setSelectedItem("Density");
         optionComboBox.addActionListener(e -> {
@@ -441,6 +493,30 @@ public class GUI extends JPanel {
         }
     }
 
+    // Apply mouse effect
+    private void applyMouseEffect(MouseEvent e) {
+        // Get mouse position
+        int x = e.getX() / CELL_SIZE;
+        int y = e.getY() / CELL_SIZE;
+
+        // If in bounds
+        if (x >= 0 && x < simulator.getGrid().getWidth() &&
+                y >= 0 && y < simulator.getGrid().getHeight()) {
+
+            int button = e.getButton();
+            if (button == MouseEvent.BUTTON1) {
+                // Left click
+                simulator.addMouseInfluence(x, y, MouseEvent.BUTTON1);
+            } else if (button == MouseEvent.BUTTON3) {
+                // Right click
+                simulator.addMouseInfluence(x, y, MouseEvent.BUTTON3);
+            }
+
+            // Update GUI
+            repaint();
+        }
+    }
+
     // Create panels
     private void createGridPanel() {
         gridPanel = new JPanel() {
@@ -458,20 +534,15 @@ public class GUI extends JPanel {
                         Cell cell = grid.getCell(x, y);
 
                         // Options for visualisation
-                        double value;
-                        switch (colourOption) {
-                            case 1: // Density
-                                value = 0.4 * cell.density;
-                                break;
-                            case 2: // Velocity
-                                value = 0.05 * Math.sqrt(cell.velocityX * cell.velocityX + cell.velocityY * cell.velocityY);
-                                break;
-                            case 3: // Pressure
-                                value = 0.001 * cell.pressure;
-                                break;
-                            default:
-                                value = 0;
-                        }
+                        double value = switch (colourOption) {
+                            case 1 -> // Density
+                                    0.4 * cell.density;
+                            case 2 -> // Velocity
+                                    0.05 * Math.sqrt(cell.velocityX * cell.velocityX + cell.velocityY * cell.velocityY);
+                            case 3 -> // Pressure
+                                    0.001 * cell.pressure;
+                            default -> 0;
+                        };
 
                         Color cellColour = interpolateColour(baseHexCode, value);
                         g.setColor(cellColour); // Set colour
@@ -481,7 +552,7 @@ public class GUI extends JPanel {
 
 
                         // Draw velocity arrows
-                        if (simulator.showVectorArrows == true
+                        if (simulator.showVectorArrows
                                 && x % simulator.arrowSpacing == 0
                                 && y % simulator.arrowSpacing == 0) { // Arrow spacing
                             // Skip boundaries
